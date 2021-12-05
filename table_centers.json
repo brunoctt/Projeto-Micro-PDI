@@ -1,0 +1,31 @@
+{
+    "table1": {
+        "x_center": 263,
+        "y_center": 855
+    },
+    "table2": {
+        "x_center": 261,
+        "y_center": 548
+    },
+    "table3": {
+        "x_center": 260, 
+        "y_center": 278
+    },
+    "table4": {
+        "x_center": 721, 
+        "y_center": 101
+    },
+    "table5": {
+        "x_center": 1205, 
+        "y_center": 115
+    },
+    "table6": {
+        "x_center": 1210, 
+        "y_center": 399
+    },
+    "table7": {
+        "x_center": 1218, 
+        "y_center": 710
+    }
+    
+}
