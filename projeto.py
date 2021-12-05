@@ -8,7 +8,7 @@ import json
 
     
 
-def search_cards(img, centers, status):
+def search_cards(img, centers, status, search_interval=100):
     """
     Searches for the status cards on each table.
 
@@ -21,8 +21,10 @@ def search_cards(img, centers, status):
         status: New status of each card.
     """    
     for table in centers.items():
-        for i in range(table[1]['y_center'] - 100, table[1]['y_center'] + 100):
-            for j in range(table[1]['x_center'] - 100, table[1]['x_center'] + 100):
+        for i in range(table[1]['y_center'] - search_interval, 
+                       table[1]['y_center'] + search_interval):
+            for j in range(table[1]['x_center'] - search_interval, 
+                           table[1]['x_center'] + search_interval):
                 if img[i, j, 1] > 140 and img[i, j, 2] > 150:
                     if img[i, j, 0] == 0:  # Red
                         status[table[0]] = 'red'
