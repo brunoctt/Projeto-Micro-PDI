@@ -59,13 +59,25 @@ if __name__ == '__main__':
     # status = search_cards(img_hsv, centers, status)
     # print(status)
     
-    url = 'http://192.168.1.38:8080/'
-    cap = cv2.VideoCapture(url)
+    video = cv2.VideoCapture(0)
+  
     while(True):
-        ret, frame = cap.read()
-        if frame is not None:
-            cv2.imshow('frame',frame)
-        q = cv2.waitKey(1)
-        if q == ord("q"):
+        
+        _, frame = video.read()
+    
+        # Displaying footage
+        cv2.imshow('Webcam', frame)
+        
+        # Need to set up tables
+        # contours = tables.find_tables(frame, min_table=100)
+        # centers = tables.center_of_table(contours)
+        # tables.show_tables(frame, contours)
+        
+        # Press 'q' to quit
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    
+    # After the loop release the cap object
+    video.release()
+    # Destroy all the windows
     cv2.destroyAllWindows()
