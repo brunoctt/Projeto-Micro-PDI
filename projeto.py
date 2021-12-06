@@ -8,7 +8,7 @@ import json
 
     
 
-def search_cards(img, centers, status, search_interval=100):
+def search_cards(img, centers, status, y_range=100, x_range=150, step=2):
     """
     Searches for the status cards on each table.
 
@@ -16,15 +16,18 @@ def search_cards(img, centers, status, search_interval=100):
         img: Image to search.
         centers: Center coordinates of each table.
         status: Card status of each table.
+        y_range: Range to search from central point on y axis. Defaults to 100.
+        x_range: Range to search from central point on x axis. Defaults to 150.
+        step: Steps of range to search. Defaults to 2.
 
     Returns:
         status: New status of each card.
     """    
     for table in centers.items():
-        for i in range(table[1]['y_center'] - search_interval, 
-                       table[1]['y_center'] + search_interval):
-            for j in range(table[1]['x_center'] - search_interval, 
-                           table[1]['x_center'] + search_interval):
+        for i in range(table[1]['y_center'] - y_range, 
+                       table[1]['y_center'] + y_range, step):
+            for j in range(table[1]['x_center'] - x_range, 
+                           table[1]['x_center'] + x_range, step):
                 if img[i, j, 1] > 140 and img[i, j, 2] > 150:
                     if img[i, j, 0] == 0:  # Red
                         status[table[0]] = 'red'
@@ -46,11 +49,23 @@ if __name__ == '__main__':
     status = {mesa: 'red' for mesa in centers.keys()}    
 
     
-    img = cv2.imread('exemplo_mesas1.png')
+    img = cv2.imread('exemplo_mesas3.png')
+    
+    # contours = tables.find_tables(img)
+    # centers = tables.center_of_table(contours)
+    # tables.show_tables(img, contours)
+    
     # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # status = search_cards(img_hsv, centers, status)
     # print(status)
     
-    contours = tables.find_tables(img)
-    centers = tables.center_of_table(contours)
-    tables.show_tables(img, contours)
+    url = 'http://192.168.1.38:8080/'
+    cap = cv2.VideoCapture(url)
+    while(True):
+        ret, frame = cap.read()
+        if frame is not None:
+            cv2.imshow('frame',frame)
+        q = cv2.waitKey(1)
+        if q == ord("q"):
+            break
+    cv2.destroyAllWindows()
