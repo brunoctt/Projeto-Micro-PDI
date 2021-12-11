@@ -8,7 +8,7 @@ import json
 
     
 
-def search_cards(img, centers, status, y_range=100, x_range=150, step=2):
+def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
     """
     Searches for the status cards on each table.
 
@@ -24,17 +24,28 @@ def search_cards(img, centers, status, y_range=100, x_range=150, step=2):
         status: New status of each card.
     """    
     for table in centers.items():
-        for i in range(table[1]['y_center'] - y_range, 
-                       table[1]['y_center'] + y_range, step):
-            for j in range(table[1]['x_center'] - x_range, 
-                           table[1]['x_center'] + x_range, step):
-                if img[i, j, 1] > 140 and img[i, j, 2] > 150:
-                    if img[i, j, 0] == 0:  # Red
-                        status[table[0]] = 'red'
-                        break
-                    if img[i, j, 0] == 60:  # Green
-                        status[table[0]] = 'green'
-                        break 
+        
+        # Stores all results obtained for the table
+        all_status = []
+        # print(table)
+        # print('-------------')
+        for i in range(max(table[1]['y_center'] - y_range, 0), 
+                       min(table[1]['y_center'] + y_range, img.shape[0]), step):
+            for j in range(max(table[1]['x_center'] - x_range, 0), 
+                           min(table[1]['x_center'] + x_range, img.shape[1]), step):
+                # if img[i, j, 1] > 120 and img[i, j, 2] > 140:
+                if img[i, j, 0] >= 175 :  # Red
+                    all_status.append('red')
+                    # print(table[0], i, j, img[i, j, 0], 'Red')
+                    break
+                elif 70 <= img[i, j, 0] <= 90:  # Green
+                    all_status.append('green')
+                    # print(table[0], i, j, img[i, j, 0], 'Green')
+                    break 
+        
+        if all_status:
+            # Gets the result that occured the most 
+            status[table[0]] = max(set(all_status), key=all_status.count)
                 
     return status
 
@@ -42,23 +53,27 @@ def search_cards(img, centers, status, y_range=100, x_range=150, step=2):
 if __name__ == '__main__': 
     
     # Loading tables data
-    with open('table_centers.json') as file:
+    with open('test_centers.json') as file:
         centers = json.load(file)
         
     # Creating status for each table and setting card color to red
-    status = {mesa: 'red' for mesa in centers.keys()}    
+    status = {mesa: None for mesa in centers.keys()}    
 
     
-    img = cv2.imread('exemplo_mesas3.png')
+    """img = cv2.imread('test_cards.jpeg')
     
-    # contours = tables.find_tables(img)
+    # contours = tables.find_tables(img, 0, 10000000)
     # centers = tables.center_of_table(contours)
     # tables.show_tables(img, contours)
     
-    # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # status = search_cards(img_hsv, centers, status)
-    # print(status)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # plt.imshow(img_hsv)
+    # plt.show()
+    status = search_cards(img_hsv, centers, status)
+    print(status)"""
     
+    
+
     video = cv2.VideoCapture(0)
   
     while(True):
@@ -69,9 +84,16 @@ if __name__ == '__main__':
         cv2.imshow('Webcam', frame)
         
         # Need to set up tables
-        # contours = tables.find_tables(frame, min_table=100)
+        # contours = tables.find_tables(frame, 0, 10000000)
         # centers = tables.center_of_table(contours)
         # tables.show_tables(frame, contours)
+        
+        img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)        
+        status = search_cards(img_hsv, centers, status, step=3)       
+        plt.imshow(img_hsv)
+        plt.show()
+        print(status)
+
         
         # Press 'q' to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -79,5 +101,7 @@ if __name__ == '__main__':
     
     # After the loop release the cap object
     video.release()
+
+    
     # Destroy all the windows
     cv2.destroyAllWindows()
