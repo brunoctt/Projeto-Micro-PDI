@@ -22,7 +22,11 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
 
     Returns:
         status: New status of each card.
+        green_queue: Queue with all tables having a green card.
     """    
+    
+    green_queue = []
+    
     for table in centers.items():
         
         # Stores all results obtained for the table
@@ -46,8 +50,20 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
         if all_status:
             # Gets the result that occured the most 
             status[table[0]] = max(set(all_status), key=all_status.count)
+            # If result is green, try to add to queue
+            if status[table[0]] == 'green':
+                # Verifying if not already in queue
+                if table[0] not in green_queue:
+                    green_queue.insert(0, table[0])
+                    
+            # In case of red, will remove from queue
+            elif status[table[0]] == 'red':
+                # Verifying if present in queue
+                if table[0] in green_queue:
+                    green_queue.remove(table[0])
                 
-    return status
+                
+    return status, green_queue
 
 
 if __name__ == '__main__': 
@@ -58,6 +74,9 @@ if __name__ == '__main__':
         
     # Creating status for each table and setting card color to red
     status = {mesa: None for mesa in centers.keys()}    
+    
+    # # Queue of all tables with green status
+    # queue = []
 
     
     """img = cv2.imread('test_cards.jpeg')
@@ -92,10 +111,11 @@ if __name__ == '__main__':
         # tables.show_tables(frame, contours)
         
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)        
-        status = search_cards(img_hsv, centers, status, step=3)       
+        status, queue = search_cards(img_hsv, centers, status, step=3)       
         plt.imshow(img_hsv)
         plt.show()
         print(status)
+        print(queue)
 
         
         # Press 'q' to quit
