@@ -75,6 +75,9 @@ if __name__ == '__main__':
     
 
     video = cv2.VideoCapture(0)
+    # Setting higher resolution
+    video.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    video.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
   
     while(True):
         

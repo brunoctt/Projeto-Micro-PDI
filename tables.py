@@ -1,5 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
+import imutils
 
 
 def find_tables(img, min_table=1000, max_table=60000):
@@ -17,11 +19,12 @@ def find_tables(img, min_table=1000, max_table=60000):
     
     # Converting to grayscale, using gaussian blur and binary treshold
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # blurred = cv2.medianBlur(img_gray, 5)
     blurred = cv2.GaussianBlur(img_gray, (5, 5), 0)
     binary = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
 
     # Obtaining all available contours from image
-    contours, _ = cv2.findContours(binary[1], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(binary[1], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     good_contours = []
 
