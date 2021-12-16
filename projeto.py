@@ -22,7 +22,8 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
 
     Returns:
         status: New status of each card.
-        green_queue: Queue with all tables having a green card.
+        green_status: Name of the table with green card, or None.
+        # green_queue: Queue with all tables having a green card.
     """    
     
     green_queue = []
@@ -50,20 +51,28 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
         if all_status:
             # Gets the result that occured the most 
             status[table[0]] = max(set(all_status), key=all_status.count)
-            # If result is green, try to add to queue
-            if status[table[0]] == 'green':
-                # Verifying if not already in queue
-                if table[0] not in green_queue:
-                    green_queue.insert(0, table[0])
+            # Not using green_queue for now
+            # # If result is green, try to add to queue
+            # if status[table[0]] == 'green':
+            #     # Verifying if not already in queue
+            #     if table[0] not in green_queue:
+            #         green_queue.insert(0, table[0])
                     
-            # In case of red, will remove from queue
-            elif status[table[0]] == 'red':
-                # Verifying if present in queue
-                if table[0] in green_queue:
-                    green_queue.remove(table[0])
+            # # In case of red, will remove from queue
+            # elif status[table[0]] == 'red':
+            #     # Verifying if present in queue
+            #     if table[0] in green_queue:
+            #         green_queue.remove(table[0])
+            
+    green_status = [key for key, value in status.items() if value == 'green']
+    
+    if len(green_status) == 0:
+        return status, None
+    elif len(green_status) == 1:
+        return status, green_status[0]
+    
                 
-                
-    return status, green_queue
+    raise ValueError('There should be either 0 or 1 table with green signal.')
 
 
 if __name__ == '__main__': 
