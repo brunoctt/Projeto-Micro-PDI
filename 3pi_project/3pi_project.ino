@@ -28,6 +28,17 @@ const int table4_path_lenght = 9;
 const unsigned char kitchen_table4_path[table4_path_lenght] = "RLSLRRSSB";
 const unsigned char table4_kitchen_path[table4_path_lenght] = "SLLRSRLSB";
 
+const int table5_path_lenght = 9;
+const unsigned char kitchen_table5_path[table5_path_lenght] = "RLSLRRLSB";
+const unsigned char table5_kitchen_path[table5_path_lenght] = "RLLRSRLSB";
+
+const int table6_path_lenght = 8;
+const unsigned char kitchen_table6_path[table6_path_lenght] = "RLSLRSSB";
+const unsigned char table6_kitchen_path[table6_path_lenght] = "SLRSRLSB";
+
+const int table7_path_lenght = 5;
+const unsigned char kitchen_table7_path[table7_path_lenght] = "RLLSB";
+const unsigned char table7_kitchen_path[table7_path_lenght] = "RRLSB";
 
 
 const char welcome[] PROGMEM = ">g32>>c32";
@@ -158,7 +169,6 @@ void loop(){
 
   if (Serial.available()){
     target = Serial.parseInt();
-    Serial.println(target);
   }
   
   char path[15] = "";
@@ -189,6 +199,24 @@ void loop(){
       path_length = table4_path_lenght;
       break;
 
+    case 5:
+      // Kitchen -> Table 5
+      strcpy(path, kitchen_table5_path);
+      path_length = table5_path_lenght;
+      break;
+
+    case 6:
+      // Kitchen -> Table 6
+      strcpy(path, kitchen_table6_path);
+      path_length = table6_path_lenght;
+      break;
+
+    case 7:
+      // Kitchen -> Table 7
+      strcpy(path, kitchen_table7_path);
+      path_length = table7_path_lenght;
+      break;
+    
     case -1:
       // Table 1 -> Kitchen
       strcpy(path, table1_kitchen_path);
@@ -209,14 +237,29 @@ void loop(){
 
     case -4:
       // Table 4 -> Kitchen
-//      Serial.println(path);
       strcpy(path, table4_kitchen_path);
-//      Serial.println(path);
       path_length = table4_path_lenght;
+      break;
+
+    case -5:
+      // Table 5 -> Kitchen
+      strcpy(path, table5_kitchen_path);
+      path_length = table5_path_lenght;
+      break;
+
+    case -6:
+      // Table 6 -> Kitchen
+      strcpy(path, table6_kitchen_path);
+      path_length = table6_path_lenght;
+      break;
+
+    case -7:
+      // Table 7 -> Kitchen
+      strcpy(path, table7_kitchen_path);
+      path_length = table7_path_lenght;
       break;
   }
 
-  Serial.println(path);
   
   int i;
   for (i=0; i < path_length; i++){
