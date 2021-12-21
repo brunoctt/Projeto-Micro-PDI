@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
-import tables
+# import matplotlib.pyplot as plt
 import json
+import serial
 
 
 
@@ -41,11 +41,9 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
                 # if img[i, j, 1] > 120 and img[i, j, 2] > 140:
                 if img[i, j, 0] >= 175 :  # Red
                     all_status.append('red')
-                    # print(table[0], i, j, img[i, j, 0], 'Red')
                     break
                 elif 70 <= img[i, j, 0] <= 90:  # Green
                     all_status.append('green')
-                    # print(table[0], i, j, img[i, j, 0], 'Green')
                     break 
         
         if all_status:
@@ -67,12 +65,13 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
     green_status = [key for key, value in status.items() if value == 'green']
     
     if len(green_status) == 0:
-        return status, None
+        return status, '0'
     elif len(green_status) == 1:
-        return status, green_status[0]
+        return status, green_status[0][5]
     
                 
-    raise ValueError('There should be either 0 or 1 table with green signal.')
+    print('There should be either 0 or 1 table with green signal.')
+    return status, green_status[0][5]
 
 
 if __name__ == '__main__': 
@@ -85,27 +84,18 @@ if __name__ == '__main__':
     status = {mesa: None for mesa in centers.keys()}    
     
     # # Queue of all tables with green status
-    # queue = []
-
-    
-    """img = cv2.imread('test_cards.jpeg')
-    
-    # contours = tables.find_tables(img, 0, 10000000)
-    # centers = tables.center_of_table(contours)
-    # tables.show_tables(img, contours)
-    
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # plt.imshow(img_hsv)
-    # plt.show()
-    status = search_cards(img_hsv, centers, status)
-    print(status)"""
-    
-    
+    # queue = []      
 
     video = cv2.VideoCapture(0)
     # Setting higher resolution
     video.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     video.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    
+    ser = serial.Serial('COM7', 9600)  # open serial port
+    if not ser.is_open:
+        ser.open()
+        
+    previous = '0'
   
     while(True):
         
@@ -121,12 +111,19 @@ if __name__ == '__main__':
         
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)        
         status, queue = search_cards(img_hsv, centers, status, step=3)       
-        plt.imshow(img_hsv)
-        plt.show()
         print(status)
         print(queue)
-
         
+        if queue != previous:
+            print('send')
+            ser.write(str.encode(queue)) 
+            result = None    
+            while result != "Arrived":
+                result = ser.readline()
+                print(result)
+            
+        previous =  queue
+
         # Press 'q' to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -137,3 +134,5 @@ if __name__ == '__main__':
     
     # Destroy all the windows
     cv2.destroyAllWindows()
+    
+    ser.close()
