@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import json
 import serial
 
@@ -8,7 +8,7 @@ import serial
 
     
 
-def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
+def search_cards(img, centers, status, y_range=80, x_range=50, step=2):
     """
     Searches for the status cards on each table.
 
@@ -16,8 +16,8 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
         img: Image to search.
         centers: Center coordinates of each table.
         status: Card status of each table.
-        y_range: Range to search from central point on y axis. Defaults to 100.
-        x_range: Range to search from central point on x axis. Defaults to 150.
+        y_range: Range to search from central point on y axis. Defaults to 80.
+        x_range: Range to search from central point on x axis. Defaults to 50.
         step: Steps of range to search. Defaults to 2.
 
     Returns:
@@ -77,7 +77,7 @@ def search_cards(img, centers, status, y_range=80, x_range=80, step=2):
 if __name__ == '__main__': 
     
     # Loading tables data
-    with open('test_centers.json') as file:
+    with open('table_centers.json') as file:
         centers = json.load(file)
         
     # Creating status for each table and setting card color to red
@@ -96,10 +96,16 @@ if __name__ == '__main__':
         ser.open()
         
     previous = '0'
+    i = 0
   
     while(True):
         
+        i += 1
         _, frame = video.read()
+        
+        # Skipping first 2 frames so green screen doesn't happen
+        if i < 3:
+            continue
     
         # Displaying footage
         cv2.imshow('Webcam', frame)
@@ -111,18 +117,15 @@ if __name__ == '__main__':
         
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)        
         status, queue = search_cards(img_hsv, centers, status, step=3)       
-        print(status)
-        print(queue)
+
         
         if queue != previous:
-            print('send')
-            ser.write(str.encode(queue)) 
-            result = None    
-            while result != "Arrived":
-                result = ser.readline()
-                print(result)
-            
-        previous =  queue
+            print(status)
+            print(queue)
+            ser.write(str.encode(queue))
+            # Reading a line because will only proceed with the script if receives a signal
+            _ = ser.readline()
+            previous =  queue
 
         # Press 'q' to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):

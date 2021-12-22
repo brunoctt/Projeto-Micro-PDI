@@ -281,7 +281,7 @@ void loop(){
     delay(10);
     }
 
-  Serial.println("Arrived");
+  Serial.println('0');
   OrangutanMotors::setSpeeds(0, 0);
   delay(500);
 }
