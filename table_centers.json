@@ -1,31 +1,31 @@
 {
     "table1": {
-        "x_center": 141,
-        "y_center": 560
+        "x_center": 195,
+        "y_center": 630
     },
     "table2": {
-        "x_center": 323,
-        "y_center": 585
+        "x_center": 375,
+        "y_center": 640
     },
     "table3": {
-        "x_center": 643, 
-        "y_center": 596
+        "x_center": 680, 
+        "y_center": 640
     },
     "table4": {
-        "x_center": 640, 
-        "y_center": 940
+        "x_center": 950, 
+        "y_center": 640
     },
     "table5": {
-        "x_center": 1235, 
-        "y_center": 447
+        "x_center": 1220, 
+        "y_center": 435
     },
     "table6": {
-        "x_center": 1210, 
-        "y_center": 168
+        "x_center": 1220, 
+        "y_center": 180
     },
     "table7": {
-        "x_center": 626, 
-        "y_center": 121
+        "x_center": 670, 
+        "y_center": 85
     }
     
 }

@@ -1,0 +1,3 @@
+Rx hc-06 = red
+Roxo/vinho = vcc
+Gnd compartilhado com outros 2

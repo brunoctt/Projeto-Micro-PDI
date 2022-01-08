@@ -12,33 +12,53 @@
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
-const int table1_path_lenght = 5;
-const unsigned char kitchen_table1_path[table1_path_lenght] = "RRLSB";
-const unsigned char table1_kitchen_path[table1_path_lenght] = "RLLSB";
 
-const int table2_path_lenght = 4;
-const unsigned char kitchen_table2_path[table2_path_lenght] = "RSSB";
-const unsigned char table2_kitchen_path[table2_path_lenght] = "SLSB";
+//const int table1_path_lenght = 5;
+//const unsigned char kitchen_table1_path[table1_path_lenght] = "RRLSB";
+//const unsigned char table1_kitchen_path[table1_path_lenght] = "RLLSB";
+//
+//const int table2_path_lenght = 4;
+//const unsigned char kitchen_table2_path[table2_path_lenght] = "RSSB";
+//const unsigned char table2_kitchen_path[table2_path_lenght] = "SLSB";
+//
+//const int table3_path_lenght = 5;
+//const unsigned char kitchen_table3_path[table3_path_lenght] = "RLRSB";
+//const unsigned char table3_kitchen_path[table3_path_lenght] = "LRLSB";
+//
+//const int table4_path_lenght = 9;
+//const unsigned char kitchen_table4_path[table4_path_lenght] = "RLSLRRSSB";
+//const unsigned char table4_kitchen_path[table4_path_lenght] = "SLLRSRLSB";
+//
+//const int table5_path_lenght = 9;
+//const unsigned char kitchen_table5_path[table5_path_lenght] = "RLSLRRLSB";
+//const unsigned char table5_kitchen_path[table5_path_lenght] = "RLLRSRLSB";
+//
+//const int table6_path_lenght = 8;
+//const unsigned char kitchen_table6_path[table6_path_lenght] = "RLSLRSSB";
+//const unsigned char table6_kitchen_path[table6_path_lenght] = "SLRSRLSB";
+//
+//const int table7_path_lenght = 5;
+//const unsigned char kitchen_table7_path[table7_path_lenght] = "RLLSB";
+//const unsigned char table7_kitchen_path[table7_path_lenght] = "RRLSB";
 
-const int table3_path_lenght = 5;
-const unsigned char kitchen_table3_path[table3_path_lenght] = "RLRSB";
-const unsigned char table3_kitchen_path[table3_path_lenght] = "LRLSB";
+const unsigned char paths_matrix[][20] = {"",
+        "RRLSB", //kitchen to table 1
+        "RSSB", //kitchen to table 2
+        "RLRSB", //kitchen to table 3
+        "RLSLRRSSB", //kitchen to table 4
+        "RLSLRRLSB", //kitchen to table 5
+        "RLSLRSSB", //kitchen to table 6
+        "RLLSB", //kitchen to table 7
+        "RRLSB", //table 7 to kitchen
+        "SLRSRLSB", //table 6 to kitchen
+        "RLLRSRLSB", //table 5 to kitchen
+        "SLLRSRLSB", //table 4 to kitchen
+        "LRLSB", //table 3 to kitchen
+        "SLSB", //table 2 to kitchen
+        "RLLSB" //table 1 to kitchen
+    };
 
-const int table4_path_lenght = 9;
-const unsigned char kitchen_table4_path[table4_path_lenght] = "RLSLRRSSB";
-const unsigned char table4_kitchen_path[table4_path_lenght] = "SLLRSRLSB";
-
-const int table5_path_lenght = 9;
-const unsigned char kitchen_table5_path[table5_path_lenght] = "RLSLRRLSB";
-const unsigned char table5_kitchen_path[table5_path_lenght] = "RLLRSRLSB";
-
-const int table6_path_lenght = 8;
-const unsigned char kitchen_table6_path[table6_path_lenght] = "RLSLRSSB";
-const unsigned char table6_kitchen_path[table6_path_lenght] = "SLRSRLSB";
-
-const int table7_path_lenght = 5;
-const unsigned char kitchen_table7_path[table7_path_lenght] = "RLLSB";
-const unsigned char table7_kitchen_path[table7_path_lenght] = "RRLSB";
+const int matrix_size = sizeof(paths_matrix)/sizeof(paths_matrix[0]);
 
 
 const char welcome[] PROGMEM = ">g32>>c32";
@@ -58,7 +78,7 @@ void setup(){
   delay(1000);
 
 
-  for (counter=0; counter<80; counter++)
+  for (counter=0; counter<=80; counter++)
   {
     if (counter < 20 || counter >= 60)
       OrangutanMotors::setSpeeds(40, -40);
@@ -72,14 +92,14 @@ void setup(){
 
   OrangutanMotors::setSpeeds(0, 0);
 
-  int bat = read_battery_millivolts();
-
-  if (!Serial.available()){
-    Serial.println("Battery Level:");
-    Serial.print(bat);
-    Serial.println(" mV");
-    Serial.println("=============================");
-    }
+//  int bat = read_battery_millivolts();
+//
+//  if (!Serial.available()){
+//    Serial.println("Battery Level:");
+//    Serial.print(bat);
+//    Serial.println(" mV");
+//    Serial.println("=============================");
+//    }
     
   
 }
@@ -153,12 +173,20 @@ void turn(unsigned char dir)
   case 'B':
     // Turn around.
     OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
-    delay(700);
+    delay(680);
     break;
   case 'S':
     // Don't do anything!
     break;
   }
+}
+
+int index(int num, int total_size){
+    if (num >= 0)
+        return num;
+    else
+        return  (num % total_size) + (total_size + 1);
+    
 }
 
 void loop(){
@@ -170,99 +198,104 @@ void loop(){
   if (Serial.available()){
     target = Serial.parseInt();
   }
+
   
-  char path[15] = "";
-  int path_length = 0;
 
-  switch(target){
-    case 1:
-      // Kitchen -> Table 1
-      strcpy(path, kitchen_table1_path);
-      path_length = table1_path_lenght;
-      break;
+  char path[20] = "";
+  int ind = index(target, matrix_size - 1);
+  strcpy(path, paths_matrix[ind]);
+//  char path[15] = "";
+//  int path_length = 0;
 
-    case 2:
-      // Kitchen -> Table 2
-      strcpy(path, kitchen_table2_path);
-      path_length = table2_path_lenght;
-      break;
-    
-    case 3:
-      // Kitchen -> Table 3
-      strcpy(path, kitchen_table3_path);
-      path_length = table3_path_lenght;
-      break;
-
-    case 4:
-      // Kitchen -> Table 4
-      strcpy(path, kitchen_table4_path);
-      path_length = table4_path_lenght;
-      break;
-
-    case 5:
-      // Kitchen -> Table 5
-      strcpy(path, kitchen_table5_path);
-      path_length = table5_path_lenght;
-      break;
-
-    case 6:
-      // Kitchen -> Table 6
-      strcpy(path, kitchen_table6_path);
-      path_length = table6_path_lenght;
-      break;
-
-    case 7:
-      // Kitchen -> Table 7
-      strcpy(path, kitchen_table7_path);
-      path_length = table7_path_lenght;
-      break;
-    
-    case -1:
-      // Table 1 -> Kitchen
-      strcpy(path, table1_kitchen_path);
-      path_length = table1_path_lenght;
-      break;
-
-    case -2:
-      // Table 2 -> Kitchen
-      strcpy(path, table2_kitchen_path);
-      path_length = table2_path_lenght;
-      break;
-
-    case -3:
-      // Table 3 -> Kitchen
-      strcpy(path, table3_kitchen_path);
-      path_length = table3_path_lenght;
-      break;
-
-    case -4:
-      // Table 4 -> Kitchen
-      strcpy(path, table4_kitchen_path);
-      path_length = table4_path_lenght;
-      break;
-
-    case -5:
-      // Table 5 -> Kitchen
-      strcpy(path, table5_kitchen_path);
-      path_length = table5_path_lenght;
-      break;
-
-    case -6:
-      // Table 6 -> Kitchen
-      strcpy(path, table6_kitchen_path);
-      path_length = table6_path_lenght;
-      break;
-
-    case -7:
-      // Table 7 -> Kitchen
-      strcpy(path, table7_kitchen_path);
-      path_length = table7_path_lenght;
-      break;
-  }
+//  switch(target){
+//    case 1:
+//      // Kitchen -> Table 1
+//      strcpy(path, kitchen_table1_path);
+//      path_length = table1_path_lenght;
+//      break;
+//
+//    case 2:
+//      // Kitchen -> Table 2
+//      strcpy(path, kitchen_table2_path);
+//      path_length = table2_path_lenght;
+//      break;
+//    
+//    case 3:
+//      // Kitchen -> Table 3
+//      strcpy(path, kitchen_table3_path);
+//      path_length = table3_path_lenght;
+//      break;
+//
+//    case 4:
+//      // Kitchen -> Table 4
+//      strcpy(path, kitchen_table4_path);
+//      path_length = table4_path_lenght;
+//      break;
+//
+//    case 5:
+//      // Kitchen -> Table 5
+//      strcpy(path, kitchen_table5_path);
+//      path_length = table5_path_lenght;
+//      break;
+//
+//    case 6:
+//      // Kitchen -> Table 6
+//      strcpy(path, kitchen_table6_path);
+//      path_length = table6_path_lenght;
+//      break;
+//
+//    case 7:
+//      // Kitchen -> Table 7
+//      strcpy(path, kitchen_table7_path);
+//      path_length = table7_path_lenght;
+//      break;
+//    
+//    case -1:
+//      // Table 1 -> Kitchen
+//      strcpy(path, table1_kitchen_path);
+//      path_length = table1_path_lenght;
+//      break;
+//
+//    case -2:
+//      // Table 2 -> Kitchen
+//      strcpy(path, table2_kitchen_path);
+//      path_length = table2_path_lenght;
+//      break;
+//
+//    case -3:
+//      // Table 3 -> Kitchen
+//      strcpy(path, table3_kitchen_path);
+//      path_length = table3_path_lenght;
+//      break;
+//
+//    case -4:
+//      // Table 4 -> Kitchen
+//      strcpy(path, table4_kitchen_path);
+//      path_length = table4_path_lenght;
+//      break;
+//
+//    case -5:
+//      // Table 5 -> Kitchen
+//      strcpy(path, table5_kitchen_path);
+//      path_length = table5_path_lenght;
+//      break;
+//
+//    case -6:
+//      // Table 6 -> Kitchen
+//      strcpy(path, table6_kitchen_path);
+//      path_length = table6_path_lenght;
+//      break;
+//
+//    case -7:
+//      // Table 7 -> Kitchen
+//      strcpy(path, table7_kitchen_path);
+//      path_length = table7_path_lenght;
+//      break;
+//  }
 
   
   int i;
-  for (i=0; i < path_length; i++){
+  for (i=0; i < sizeof(path); i++){  // sizeof()
 
     if (path[i] != 'B'){
       follow_segment();
@@ -272,14 +305,17 @@ void loop(){
       delay(50);
       OrangutanMotors::setSpeeds(40, 40);
       delay(200);
-      }
+    }
     
       
     // Make a turn according to the instruction stored in
     // path[i].
     turn(path[i]);
     delay(10);
+    if (path[i] == 'B'){
+      break;
     }
+  }
 
   Serial.println('0');
   OrangutanMotors::setSpeeds(0, 0);
