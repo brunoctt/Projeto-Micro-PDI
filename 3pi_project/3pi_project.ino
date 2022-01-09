@@ -41,21 +41,36 @@ unsigned int sensors[5]; // an array to hold sensor values
 //const unsigned char kitchen_table7_path[table7_path_lenght] = "RLLSB";
 //const unsigned char table7_kitchen_path[table7_path_lenght] = "RRLSB";
 
+//        "RRLSB", //kitchen to table 1
+//        "RSSB", //kitchen to table 2
+//        "RLRSB", //kitchen to table 3
+//        "RLSLRRSSB", //kitchen to table 4
+//        "RLSLRRLSB", //kitchen to table 5
+//        "RLSLRSSB", //kitchen to table 6
+//        "RLLSB", //kitchen to table 7
+//        "RRLSB", //table 7 to kitchen
+//        "SLRSRLSB", //table 6 to kitchen
+//        "RLLRSRLSB", //table 5 to kitchen
+//        "SLLRSRLSB", //table 4 to kitchen
+//        "LRLSB", //table 3 to kitchen
+//        "SLSB", //table 2 to kitchen
+//        "RLLSB" //table 1 to kitchen
+
 const unsigned char paths_matrix[][20] = {"",
-        "RRLSB", //kitchen to table 1
-        "RSSB", //kitchen to table 2
-        "RLRSB", //kitchen to table 3
-        "RLSLRRSSB", //kitchen to table 4
-        "RLSLRRLSB", //kitchen to table 5
-        "RLSLRSSB", //kitchen to table 6
-        "RLLSB", //kitchen to table 7
-        "RRLSB", //table 7 to kitchen
-        "SLRSRLSB", //table 6 to kitchen
-        "RLLRSRLSB", //table 5 to kitchen
-        "SLLRSRLSB", //table 4 to kitchen
-        "LRLSB", //table 3 to kitchen
-        "SLSB", //table 2 to kitchen
-        "RLLSB" //table 1 to kitchen
+        "RRLB", //kitchen to table 1
+        "RSB", //kitchen to table 2
+        "RLRB", //kitchen to table 3
+        "RLSLRRSB", //kitchen to table 4
+        "RLSLRRLB", //kitchen to table 5
+        "RLSLRSB", //kitchen to table 6
+        "RLLB", //kitchen to table 7
+        "RRLB", //table 7 to kitchen
+        "SLRSRLB", //table 6 to kitchen
+        "RLLRSRLB", //table 5 to kitchen
+        "SLLRSRLB", //table 4 to kitchen
+        "LRLB", //table 3 to kitchen
+        "SLB", //table 2 to kitchen
+        "RLLB" //table 1 to kitchen
     };
 
 const int matrix_size = sizeof(paths_matrix)/sizeof(paths_matrix[0]);
@@ -163,12 +178,14 @@ void turn(unsigned char dir)
   case 'L':
     // Turn left.
     OrangutanMotors::setSpeeds(-turn_intensity, turn_intensity);
-    delay(350);
+//    OrangutanMotors::setSpeeds(-turn_intensity, turn_intensity);
+//    delay(350);
     break;
   case 'R':
     // Turn right.
     OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
-    delay(350);
+//    OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
+//    delay(350);
     break;
   case 'B':
     // Turn around.
@@ -178,6 +195,12 @@ void turn(unsigned char dir)
   case 'S':
     // Don't do anything!
     break;
+  }
+  if (dir != 'B'){
+    delay(80);
+    do{
+      unsigned int position = robot.readLine(sensors, IR_EMITTERS_ON);
+    } while(sensors[2] <= 950);
   }
 }
 
@@ -297,16 +320,21 @@ void loop(){
   int i;
   for (i=0; i < sizeof(path); i++){  // sizeof()
 
-    if (path[i] != 'B'){
-      follow_segment();
-
-      // Drive straight while slowing down, as before.
-      OrangutanMotors::setSpeeds(50, 50);
-      delay(50);
-      OrangutanMotors::setSpeeds(40, 40);
-      delay(200);
-    }
+    follow_segment();
     
+//    if (path[i] != 'B'){  
+//
+//      // follow_segment();
+//      // Drive straight while slowing down, as before.
+//      OrangutanMotors::setSpeeds(40, 40);
+////      delay(50);
+//      delay(200);
+////      OrangutanMotors::setSpeeds(40, 40);
+////      delay(200);
+//    }
+
+    OrangutanMotors::setSpeeds(40, 40);
+    delay(220);
       
     // Make a turn according to the instruction stored in
     // path[i].

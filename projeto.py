@@ -142,8 +142,8 @@ if __name__ == '__main__':
             print(_res)
             previous =  queue
         
-        plt.imshow(img_hsv)
-        plt.show()
+        # plt.imshow(img_hsv)
+        # plt.show()
 
         # Press 'q' to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):
