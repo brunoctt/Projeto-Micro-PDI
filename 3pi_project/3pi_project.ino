@@ -127,7 +127,7 @@ void follow_segment()
   while(1)
   {
     // Get the position of the line.
-    unsigned int position = robot.readLine(sensors, IR_EMITTERS_ON);
+    unsigned int position = robot.readLine(sensors);
 
     // The "proportional" term should be 0 when we are on the line.
     int proportional = ((int)position) - 2000;
@@ -194,12 +194,13 @@ void turn(unsigned char dir)
     break;
   case 'S':
     // Don't do anything!
-    break;
+    return;
   }
   if (dir != 'B'){
     delay(80);
     do{
-      unsigned int position = robot.readLine(sensors, IR_EMITTERS_ON);
+      robot.readLine(sensors);
+//      } while(position != 2000);
     } while(sensors[2] <= 950);
   }
 }
