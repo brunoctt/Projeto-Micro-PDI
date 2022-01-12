@@ -101,6 +101,8 @@ if __name__ == '__main__':
         
     previous = '0'
     i = 0
+    
+    print('Begin')
   
     while(True):
         
@@ -139,7 +141,7 @@ if __name__ == '__main__':
             ser.write(str.encode(queue))
             # Reading a line because will only proceed with the script if receives a signal
             _res = ser.readline()
-            print(_res)
+            # print(_res)
             previous =  queue
         
         # plt.imshow(img_hsv)
