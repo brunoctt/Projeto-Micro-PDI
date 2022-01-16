@@ -190,19 +190,25 @@ void turn(unsigned char dir)
   case 'B':
     // Turn around.
     OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
-    delay(680);
+//    delay(680);
     break;
   case 'S':
     // Don't do anything!
     return;
   }
-  if (dir != 'B'){
-    delay(80);
-    do{
-      robot.readLine(sensors);
-//      } while(position != 2000);
-    } while(sensors[2] <= 950);
-  }
+//  if (dir != 'B'){
+  delay(80);
+  do{
+    robot.readLine(sensors);
+  //      } while(position != 2000);
+  } while(sensors[2] <= 950);
+//  }
+//  if (dir == 'B'){
+//    delay(80);
+//    do{
+//    robot.readLine(sensors);
+//  } while(sensors[2] <= 950);
+//  }
 }
 
 int index(int num, int total_size){
