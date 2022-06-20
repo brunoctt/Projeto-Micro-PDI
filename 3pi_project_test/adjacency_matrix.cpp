@@ -3,6 +3,9 @@ using namespace std;
 
 // no. of vertices
 const unsigned int n_vertices = 5;
+
+// 2d array of vectors is used to store the graph
+// in the form of an adjacency list
 char adj[n_vertices][n_vertices][3];
 
 int convert_coordinate(char direction);
@@ -110,20 +113,20 @@ vector<int> printShortestDistance(int s, int dest)
 	return path;
 }
 
-vector<char> createPath(vector<int> path, char (*paths_matrix)[n_vertices][3], int *robot_facing)
+vector<char> createPath(vector<int> path, int *robot_facing)  // , char (*adj)[n_vertices][3]
 {
     
     vector<char> turns;
     cout << "\nPath in coordinates: ";
-    // cout << paths_matrix[path[2]][path[1]] << " ";
+    // cout << adj[path[2]][path[1]] << " ";
     for (int i = path.size() - 1; i > 0; i--){
-	   //cout << paths_matrix[path[i]][path[i-1]] << " ";
-        turns.push_back(get_turn(paths_matrix[path[i]][path[i-1]][0], robot_facing));
-        if (paths_matrix[path[i]][path[i-1]][1] != '\0')
-            turns.push_back(get_turn(paths_matrix[path[i]][path[i-1]][1], robot_facing));
+	   //cout << adj[path[i]][path[i-1]] << " ";
+        turns.push_back(get_turn(adj[path[i]][path[i-1]][0], robot_facing));
+        if (adj[path[i]][path[i-1]][1] != '\0')
+            turns.push_back(get_turn(adj[path[i]][path[i-1]][1], robot_facing));
     }
 	for (int k = path.size() - 1; k > 0; k--)
-	    cout << paths_matrix[path[k]][path[k-1]];
+	    cout << adj[path[k]][path[k-1]];
 	cout << "\n";
 	
 	return turns;
@@ -131,21 +134,15 @@ vector<char> createPath(vector<int> path, char (*paths_matrix)[n_vertices][3], i
 
 char get_turn(char direction, int *robot_facing){
     
-    // cout << "\n";
-    
     int robot_direction = *robot_facing;
-    // cout << robot_direction << "\n";
     
     int conv_dir = convert_coordinate(direction);
-    // cout << conv_dir << "\n";
     
     // Modulo 4 operation in case turn is negative
     char turn = convert_to_turn((4 + robot_direction - conv_dir) % 4);
-    // cout << turn << "\n";
-
+    
     // Updating robot direction after turn
     *robot_facing = conv_dir;
-    // cout << *robot_facing << "\n";
     
     return turn;
 }
@@ -184,23 +181,7 @@ int convert_coordinate(char direction){
 int main()
 {
 	
-
-	// 2d array of vectors is used to store the graph
-	// in the form of an adjacency list
-// 	vector<int> adj[n_vertices];
-	
 	int robot_facing = convert_coordinate('N');
-
-    char paths_matrix[n_vertices][n_vertices][3];
-    strcpy(paths_matrix[0][1], "NE");
-    strcpy(paths_matrix[1][0], "W");
-    strcpy(paths_matrix[1][2], "N");
-    strcpy(paths_matrix[1][3], "E");
-    strcpy(paths_matrix[1][4], "S");
-    strcpy(paths_matrix[2][1], "S");
-    strcpy(paths_matrix[3][1], "W");
-    strcpy(paths_matrix[4][1], "N");
-    
 
 	// Creating graph given in the above diagram.
 	// add_edge function takes adjacency list, source
@@ -210,18 +191,10 @@ int main()
 	add_edge(1, 2, "N", "S");
 	add_edge(1, 3, "E", "W");
 	add_edge(1, 4, "S", "N");
-	
-//     add_edge(0, 1, "NE", "W");
-// 	add_edge(0, 2, "N", "S");
-// 	add_edge(1, 3, "E", "W");
-// 	add_edge(3, 4, "E", "W");
-	
-// 	for(int k = 0; k < n_vertices; k++)
-// 	    cout << adj[1][k];
 	    
-	int source = 0, dest = 3;
+	int source = 0, dest = 4;
 	vector<int> path = printShortestDistance(source, dest);
-	vector<char> turns = createPath(path, paths_matrix, &robot_facing);
+	vector<char> turns = createPath(path, &robot_facing);
 	cout << "Path in turns: ";
 	for(int i = 0; i<turns.size(); i++)
 	    cout << turns[i];
