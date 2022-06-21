@@ -77,13 +77,13 @@ bool BFS(int src, int dest, int pred[], int dist[])
 	return false;
 }
 
-// utility function to print the shortest distance
-// between source vertex and destination vertex
-vector<int> printShortestDistance(int s, int dest)
+/**
+    Finds shortest path from source to destination
+*/
+vector<int> create_path_coordinates(int s, int dest)
 {
-	// predecessor[i] array stores predecessor of
-	// i and distance array stores distance of i
-	// from s
+	// predecessor[i] array stores predecessor of i and distance array stores 
+    // distance of i from s
 	int pred[n_vertices], dist[n_vertices];
 	vector<int> path;
 
@@ -113,14 +113,20 @@ vector<int> printShortestDistance(int s, int dest)
 	return path;
 }
 
-vector<char> createPath(vector<int> path, int *robot_facing)  // , char (*adj)[n_vertices][3]
+/**
+    Creates path in turns that robot must follow to go from source node to 
+    destination node
+*/
+vector<char> create_path_turns(int source, int destination, int *robot_facing)  // , char (*adj)[n_vertices][3]
 {
     
     vector<char> turns;
+    // Gets path in general coordinates to later convert to turns
+    vector<int> path = create_path_coordinates(source, destination);
+    
+    // Converting path to turns vector
     cout << "\nPath in coordinates: ";
-    // cout << adj[path[2]][path[1]] << " ";
     for (int i = path.size() - 1; i > 0; i--){
-	   //cout << adj[path[i]][path[i-1]] << " ";
         turns.push_back(get_turn(adj[path[i]][path[i-1]][0], robot_facing));
         if (adj[path[i]][path[i-1]][1] != '\0')
             turns.push_back(get_turn(adj[path[i]][path[i-1]][1], robot_facing));
@@ -132,6 +138,10 @@ vector<char> createPath(vector<int> path, int *robot_facing)  // , char (*adj)[n
 	return turns;
 }
 
+/**
+    Calculates next turn given direction robot must go and direction its facing
+    using a modulo 4 operation and int equivalent of coordinate
+*/
 char get_turn(char direction, int *robot_facing){
     
     int robot_direction = *robot_facing;
@@ -147,6 +157,9 @@ char get_turn(char direction, int *robot_facing){
     return turn;
 }
 
+/**
+    Converts int coordinate to turn
+*/
 char convert_to_turn(int turn){
     switch (turn){
         case 0:
@@ -162,6 +175,9 @@ char convert_to_turn(int turn){
     }
 }
 
+/**
+    Converts coordinates to corresponding int values
+*/
 int convert_coordinate(char direction){
     switch (direction){
         case 'N':
@@ -177,28 +193,31 @@ int convert_coordinate(char direction){
     }
 }
 
-// Driver program to test above functions
+
 int main()
 {
 	
+	// Initializing direction robot is facing
 	int robot_facing = convert_coordinate('N');
+	// Choosing start and end node    
+	int source = 0, dest = 4;
 
-	// Creating graph given in the above diagram.
-	// add_edge function takes adjacency list, source
-	// and destination vertex as argument and forms
-	// an edge between them.
+	// add_edge function adds coordinates to given source and destination
+	// (source, destination, coord source-destination, coord destination-source)
 	add_edge(0, 1, "NE", "W");
 	add_edge(1, 2, "N", "S");
 	add_edge(1, 3, "E", "W");
 	add_edge(1, 4, "S", "N");
-	    
-	int source = 0, dest = 4;
-	vector<int> path = printShortestDistance(source, dest);
-	vector<char> turns = createPath(path, &robot_facing);
+	
+	// Getting path given source, destination and direction robot is facing
+	vector<char> turns = create_path_turns(source, dest, &robot_facing);
+	
+	// Printing turns robot must take and its final direction
 	cout << "Path in turns: ";
 	for(int i = 0; i<turns.size(); i++)
 	    cout << turns[i];
     cout << "\nRobot Facing: ";
 	cout << convert_coordinate(robot_facing);
+	
 	return 0;
 }
