@@ -12,43 +12,36 @@ int convert_coordinate(char direction);
 char convert_to_turn(int turn);
 char get_turn(char direction, int *robot_facing);
 
-// utility function to form edge between two vertices
-// source and dest
+/**
+    Inputs relation between two nodes into adjacency matrix
+*/
 void add_edge(int src, int dest, char fdir[], char sdir[])
 {
 	strcpy(adj[src][dest], fdir);
 	strcpy(adj[dest][src], sdir);
 }
 
-// a modified version of BFS that stores predecessor
-// of each vertex in array p
-// and its distance from source in array d
+/**
+    BFS algorithm that stores predecessor of each vertex in array p 
+	and its distance from source in array d
+*/
 bool BFS(int src, int dest, int pred[], int dist[])
 {
-	// a queue to maintain queue of vertices whose
-	// adjacency list is to be scanned as per normal
-	// DFS algorithm
+	// queue to maintain vertices whose adjacency is to be scanned
 	vector<int> queue;
 	queue.push_back(src);
 
-	// boolean array visited[] which stores the
-	// information whether ith vertex is reached
-	// at least once in the Breadth first search
+	// initially all vertices are unvisited so visited if false for all values
 	vector<bool> visited(n_vertices, false);
 
-	// initially all vertices are unvisited
-	// so v[i] for all i is false
-	// and as no path is yet constructed
-	// dist[i] for all i set to infinity
+	
+	// since no path is yet constructed dist is set to infinity for all values
 	for (int i = 0; i < n_vertices; i++) {
-// 		for (int k = 0; k < n_vertices; k++)
-// 		    visited[i][k] = false;
 		dist[i] = INT_MAX;
 		pred[i] = -1;
 	}
 
-	// now source is first to be visited and
-	// distance from source to itself should be 0
+	// source is first to be visited and distance to itself is 0
 	visited[src] = true;
 	dist[src] = 0;
 	
@@ -56,18 +49,14 @@ bool BFS(int src, int dest, int pred[], int dist[])
 	while (!queue.empty()) {
 		int u = queue[0];
 		queue.erase(queue.begin());
-// 		queue.pop_front();
 		for (int i = 0; i < n_vertices; i++) {
 			if (visited[i] == false && adj[u][i][0]) {
-			 //   cout << u << "->" << i;
-			 //   cout << "\n";
 				visited[i] = true;
 				dist[i] = dist[u] + 1;
 				pred[i] = u;
 				queue.push_back(i);
 
-				// We stop BFS when we find
-				// destination.
+				// BFS stops when destination is found.
 				if (i == dest)
 					return true;
 			}
@@ -80,20 +69,18 @@ bool BFS(int src, int dest, int pred[], int dist[])
 /**
     Finds shortest path from source to destination
 */
-vector<int> create_path_coordinates(int s, int dest)
+vector<int> create_path_coordinates(int src, int dest)
 {
-	// predecessor[i] array stores predecessor of i and distance array stores 
+	// Predecessor array stores predecessor of i and distance array stores 
     // distance of i from s
 	int pred[n_vertices], dist[n_vertices];
 	vector<int> path;
 
-	if (BFS(s, dest, pred, dist) == false) {
-		cout << "Given source and destination"
-			<< " are not connected";
+	// Source and destination are not connected
+	if (BFS(src, dest, pred, dist) == false)
 		return path;
-	}
 
-	// vector path stores the shortest path
+	// Vector path stores the shortest path
 	int crawl = dest;
 	path.push_back(crawl);
 	while (pred[crawl] != -1) {
