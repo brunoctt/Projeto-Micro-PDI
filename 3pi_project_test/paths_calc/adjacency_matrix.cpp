@@ -191,7 +191,7 @@ int main()
 
 	// add_edge function adds coordinates to given source and destination
 	// (source, destination, coord source-destination, coord destination-source)
-	add_edge(0, 1, "NE", "W");
+	add_edge(0, 1, "NE", "WS");
 	add_edge(1, 2, "N", "S");
 	add_edge(1, 3, "E", "W");
 	add_edge(1, 4, "S", "N");
