@@ -1,12 +1,13 @@
 #include <bits/stdc++.h>
+// #include <string>
 using namespace std;
 
 // no. of vertices
-const unsigned int n_vertices = 5;
+int n_vertices = 11;
 
 // 2d array of vectors is used to store the graph
 // in the form of an adjacency list
-char adj[n_vertices][n_vertices][3];
+vector<vector<string>> adj(n_vertices);
 
 int convert_coordinate(char direction);
 char convert_to_turn(int turn);
@@ -15,10 +16,10 @@ char get_turn(char direction, int *robot_facing);
 /**
     Inputs relation between two nodes into adjacency matrix
 */
-void add_edge(int src, int dest, char fdir[], char sdir[])
+void add_edge(int src, int dest, string fdir, string sdir)
 {
-	strcpy(adj[src][dest], fdir);
-	strcpy(adj[dest][src], sdir);
+	adj[src][dest] = fdir;
+	adj[dest][src] = sdir;
 }
 
 /**
@@ -114,10 +115,12 @@ vector<char> create_path_turns(int source, int destination, int *robot_facing)  
     // Converting path to turns vector
     cout << "\nPath in coordinates: ";
     for (int i = path.size() - 1; i > 0; i--){
-        turns.push_back(get_turn(adj[path[i]][path[i-1]][0], robot_facing));
-        if (adj[path[i]][path[i-1]][1] != '\0')
-            turns.push_back(get_turn(adj[path[i]][path[i-1]][1], robot_facing));
+        for (int j = adj[path[i]][path[i-1]].size() - 1; j>=0; j--){
+            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);       
+            turns.push_back(t);
+        }
     }
+    cout << "\n";
 	for (int k = path.size() - 1; k > 0; k--)
 	    cout << adj[path[k]][path[k-1]];
 	cout << "\n";
@@ -185,16 +188,22 @@ int main()
 {
 	
 	// Initializing direction robot is facing
-	int robot_facing = convert_coordinate('N');
+	int robot_facing = convert_coordinate('S');
+	for (int i=0; i<adj.size(); i++)
+        adj[i] = vector<string>(n_vertices);
+
 	// Choosing start and end node    
-	int source = 0, dest = 4;
+	int source = 2, dest = 3;
 
 	// add_edge function adds coordinates to given source and destination
 	// (source, destination, coord source-destination, coord destination-source)
 	add_edge(0, 1, "NE", "WS");
 	add_edge(1, 2, "N", "S");
-	add_edge(1, 3, "E", "W");
-	add_edge(1, 4, "S", "N");
+	add_edge(1, 4, "SE", "WN");
+	add_edge(1, 5, "E", "W");
+	add_edge(2, 3, "NWN", "SES");
+	add_edge(2, 6, "E", "W");
+	add_edge(2, 10, "W", "E");
 	
 	// Getting path given source, destination and direction robot is facing
 	vector<char> turns = create_path_turns(source, dest, &robot_facing);
