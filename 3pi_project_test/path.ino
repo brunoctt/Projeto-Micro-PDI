@@ -1,26 +1,6 @@
-#include <bits/stdc++.h>
-// #include <string>
-using namespace std;
-
-// no. of vertices
-int n_vertices = 11;
-
-// 2d array of vectors is used to store the graph
-// in the form of an adjacency list
-vector<vector<string>> adj(n_vertices);
-
-int convert_coordinate(char direction);
-char convert_to_turn(int turn);
-char get_turn(char direction, int *robot_facing);
-
-/**
-    Inputs relation between two nodes into adjacency matrix
-*/
-void add_edge(int src, int dest, string fdir, string sdir)
-{
-	adj[src][dest] = fdir;
-	adj[dest][src] = sdir;
-}
+#include <Vector.h>
+// extern const unsigned int n_vertices;
+// extern char adj[n_vertices][n_vertices][3];
 
 /**
     BFS algorithm that stores predecessor of each vertex in array p 
@@ -29,16 +9,17 @@ void add_edge(int src, int dest, string fdir, string sdir)
 bool BFS(int src, int dest, int pred[], int dist[])
 {
 	// queue to maintain vertices whose adjacency is to be scanned
-	vector<int> queue;
+	Vector<int> queue;
 	queue.push_back(src);
 
 	// initially all vertices are unvisited so visited if false for all values
-	vector<bool> visited(n_vertices, false);
-
+	Vector<bool> visited;
+  for (int i = 0; i < n_vertices; i++)
+    visited.push_back(false);
 	
 	// since no path is yet constructed dist is set to infinity for all values
 	for (int i = 0; i < n_vertices; i++) {
-		dist[i] = INT_MAX;
+		dist[i] = 99;
 		pred[i] = -1;
 	}
 
@@ -49,7 +30,7 @@ bool BFS(int src, int dest, int pred[], int dist[])
 	// standard BFS algorithm
 	while (!queue.empty()) {
 		int u = queue[0];
-		queue.erase(queue.begin());
+		queue.remove(0);
 		for (int i = 0; i < n_vertices; i++) {
 			if (visited[i] == false && adj[u][i][0]) {
 				visited[i] = true;
@@ -68,14 +49,14 @@ bool BFS(int src, int dest, int pred[], int dist[])
 }
 
 /**
-    Finds shortest path from source to destination
+    Finds shortest path from source to destination, in relation to nodes
 */
-vector<int> create_path_coordinates(int src, int dest)
+Vector<int> create_path_coordinates(int src, int dest)
 {
 	// Predecessor array stores predecessor of i and distance array stores 
     // distance of i from s
 	int pred[n_vertices], dist[n_vertices];
-	vector<int> path;
+	Vector<int> path;
 
 	// Source and destination are not connected
 	if (BFS(src, dest, pred, dist) == false)
@@ -89,45 +70,35 @@ vector<int> create_path_coordinates(int src, int dest)
 		crawl = pred[crawl];
 	}
 
-	// distance from source is in distance array
-	cout << "Shortest path length is : "
-		<< dist[dest];
-
-	// printing path from source to destination
-	cout << "\nPath is:\n";
-	for (int i = path.size() - 1; i >= 0; i--)
-		cout << path[i] << " ";
+	// Shortest path length is dist[dest];
 		
 	return path;
 }
 
 /**
     Creates path in turns that robot must follow to go from source node to 
-    destination node
+    destination node, given path in nodes
 */
-vector<char> create_path_turns(int source, int destination, int *robot_facing)  // , char (*adj)[n_vertices][3]
+Vector<char> create_path_turns(int source, int destination, int *robot_facing)  // , char (*adj)[n_vertices][3]
 {
     
-    vector<char> turns;
+    Vector<char> turns;
     // Gets path in general coordinates to later convert to turns
-    vector<int> path = create_path_coordinates(source, destination);
+    Vector<int> path = create_path_coordinates(source, destination);
     
     // Converting path to turns vector
-    cout << "\nPath in coordinates: ";
     for (int i = path.size() - 1; i > 0; i--){
-        for (int j = adj[path[i]][path[i-1]].size() - 1; j>=0; j--){
-            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);       
-            turns.push_back(t);
-        }
+        turns.push_back(get_turn(adj[path[i]][path[i-1]][0], robot_facing));
+        if (adj[path[i]][path[i-1]][1] != '\0')
+            turns.push_back(get_turn(adj[path[i]][path[i-1]][1], robot_facing));
     }
-    cout << "\n";
-	for (int k = path.size() - 1; k > 0; k--)
-	    cout << adj[path[k]][path[k-1]];
-	cout << "\n";
+
+    // At the end of the path, turns robot around
+    turns.push_back('B');
+    *robot_facing = (*robot_facing + 2) % 4;
 	
 	return turns;
 }
-
 /**
     Calculates next turn given direction robot must go and direction its facing
     using a modulo 4 operation and int equivalent of coordinate
@@ -181,42 +152,4 @@ int convert_coordinate(char direction){
         default:
             return 0;
     }
-}
-
-
-int main()
-{
-	
-	// Initializing direction robot is facing
-	int robot_facing = convert_coordinate('S');
-	for (int i=0; i<adj.size(); i++)
-        adj[i] = vector<string>(n_vertices);
-
-	// Choosing start and end node    
-	int source = 2, dest = 3;
-
-	// add_edge function adds coordinates to given source and destination
-	// (source, destination, coord source-destination, coord destination-source)
-	add_edge(0, 1, "NE", "WS");
-	add_edge(1, 2, "N", "S");
-	add_edge(1, 4, "SE", "WN");
-	add_edge(1, 5, "E", "W");
-	add_edge(2, 3, "NWN", "SES");
-	add_edge(2, 6, "E", "W");
-	add_edge(2, 10, "W", "E");
-	add_edge(3, 7, "EE", "WW");
-	add_edge(3, 8, "EN", "SW");
-	add_edge(3, 9, "N", "S");
-	
-	// Getting path given source, destination and direction robot is facing
-	vector<char> turns = create_path_turns(source, dest, &robot_facing);
-	
-	// Printing turns robot must take and its final direction
-	cout << "Path in turns: ";
-	for(int i = 0; i<turns.size(); i++)
-	    cout << turns[i];
-    cout << "\nRobot Facing: ";
-	cout << convert_coordinate(robot_facing);
-	
-	return 0;
 }

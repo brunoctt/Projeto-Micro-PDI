@@ -1,3 +1,4 @@
+#include <Vector.h>
 #include <Pololu3pi.h>
 #include <PololuQTRSensors.h>
 #include <OrangutanMotors.h>
@@ -7,31 +8,31 @@
 #include <OrangutanPushbuttons.h>
 #include <OrangutanBuzzer.h>
 
+int convert_coordinate(char direction);
+char convert_to_turn(int turn);
+char get_turn(char direction, int *robot_facing);
+Vector<char> create_path_turns(int source, int destination, int *robot_facing);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
-
-const unsigned char paths_matrix[][20] = {"",
-        "RRLB", //kitchen to table 1
-        "RSB", //kitchen to table 2
-        "RLRB", //kitchen to table 3
-        "RLSLRRSB", //kitchen to table 4
-        "RLSLRRLB", //kitchen to table 5
-        "RLSLRSB", //kitchen to table 6
-        "RLLB", //kitchen to table 7
-        "RRLB", //table 7 to kitchen
-        "SLRSRLB", //table 6 to kitchen
-        "RLLRSRLB", //table 5 to kitchen
-        "SLLRSRLB", //table 4 to kitchen
-        "LRLB", //table 3 to kitchen
-        "SLB", //table 2 to kitchen
-        "RLLB" //table 1 to kitchen
-    };
-
-const int matrix_size = sizeof(paths_matrix)/sizeof(paths_matrix[0]);
+const int n_vertices = 11;
+// 2d array of vectors is used to store the graph in the form of an adjacency list
+Vector<Vector<String>> adj;
+int robot_facing = convert_coordinate('N');
+int robot_location = 0;
 
 
 const char welcome[] PROGMEM = ">g32>>c32";
+
+/**
+    Inputs relation between two nodes into adjacency matrix
+*/
+void add_edge(int src, int dest, String fdir, String sdir)
+{
+  adj[src][dest] = fdir;
+  adj[dest][src] = sdir;
+}
+
 
 void setup(){
   unsigned int counter; 
@@ -62,6 +63,25 @@ void setup(){
 
   OrangutanMotors::setSpeeds(0, 0);
 
+  // Initializing direction robot is facing
+	for (int i=0; i<adj.size(); i++){
+      String aux[n_vertices];
+      Vector<String> v(aux);
+      adj.push_back(v);
+	}
+
+  // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
+  add_edge(0, 1, "NE", "WS");
+	add_edge(1, 2, "N", "S");
+	add_edge(1, 4, "SE", "WN");
+	add_edge(1, 5, "E", "W");
+	add_edge(2, 3, "NWN", "SES");
+	add_edge(2, 6, "E", "W");
+	add_edge(2, 10, "W", "E");
+	add_edge(3, 7, "EE", "WW");
+	add_edge(3, 8, "EN", "SW");
+	add_edge(3, 9, "N", "S");
+
 //  int bat = read_battery_millivolts();
 //
 //  if (!Serial.available()){
@@ -74,14 +94,6 @@ void setup(){
   
 }
 
-int index(int num, int total_size){
-    if (num >= 0)
-        return num;
-    else
-        return  (num % total_size) + (total_size + 1);
-    
-}
-
 void loop(){
 
   while (!Serial.available()){}
@@ -92,12 +104,7 @@ void loop(){
     target = Serial.parseInt();
   }
 
-  
-
-  char path[20] = "";
-  int ind = index(target, matrix_size - 1);
-  strcpy(path, paths_matrix[ind]);
-
+  Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
   int i;
   for (i=0; i < sizeof(path); i++){  // sizeof()
@@ -115,6 +122,9 @@ void loop(){
       break;
     }
   }
+
+  // Once robot reaches destination, change its location to dest
+  robot_location = target;
 
   Serial.println('0');
   OrangutanMotors::setSpeeds(0, 0);
