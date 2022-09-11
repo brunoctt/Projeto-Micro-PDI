@@ -14,8 +14,8 @@ bool BFS(int src, int dest, int pred[], int dist[])
 
 	// initially all vertices are unvisited so visited if false for all values
 	Vector<bool> visited;
-  for (int i = 0; i < n_vertices; i++)
-    visited.push_back(false);
+    for (int i = 0; i < n_vertices; i++)
+        visited.push_back(false);
 	
 	// since no path is yet constructed dist is set to infinity for all values
 	for (int i = 0; i < n_vertices; i++) {
@@ -88,9 +88,10 @@ Vector<char> create_path_turns(int source, int destination, int *robot_facing)  
     
     // Converting path to turns vector
     for (int i = path.size() - 1; i > 0; i--){
-        turns.push_back(get_turn(adj[path[i]][path[i-1]][0], robot_facing));
-        if (adj[path[i]][path[i-1]][1] != '\0')
-            turns.push_back(get_turn(adj[path[i]][path[i-1]][1], robot_facing));
+        for (int j = 0; j < adj[path[i]][path[i-1]].size(); j++){
+            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);
+            turns.push_back(t);
+        }
     }
 
     // At the end of the path, turns robot around
@@ -151,5 +152,23 @@ int convert_coordinate(char direction){
             return 3;  
         default:
             return 0;
+    }
+}
+
+/**
+    Converts int values to corresponding coordinates
+*/
+char convert_value(int direction){
+    switch (direction){
+        case 0:
+            return 'N';
+        case 1:
+            return 'E';
+        case 2:
+            return 'S';
+        case 3:
+            return 'W';
+        default:
+            return 'N';
     }
 }

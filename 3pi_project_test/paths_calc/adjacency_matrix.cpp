@@ -115,12 +115,11 @@ vector<char> create_path_turns(int source, int destination, int *robot_facing)  
     // Converting path to turns vector
     cout << "\nPath in coordinates: ";
     for (int i = path.size() - 1; i > 0; i--){
-        for (int j = adj[path[i]][path[i-1]].size() - 1; j>=0; j--){
-            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);       
+        for (int j = 0; j < adj[path[i]][path[i-1]].size(); j++){
+            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);
             turns.push_back(t);
         }
     }
-    cout << "\n";
 	for (int k = path.size() - 1; k > 0; k--)
 	    cout << adj[path[k]][path[k-1]];
 	cout << "\n";
@@ -183,17 +182,35 @@ int convert_coordinate(char direction){
     }
 }
 
+/**
+    Converts int values to corresponding coordinates
+*/
+char convert_value(int direction){
+    switch (direction){
+        case 0:
+            return 'N';
+        case 1:
+            return 'E';
+        case 2:
+            return 'S';
+        case 3:
+            return 'W';
+        default:
+            return 'N';
+    }
+}
+
 
 int main()
 {
 	
 	// Initializing direction robot is facing
-	int robot_facing = convert_coordinate('S');
+	int robot_facing = convert_coordinate('N');
 	for (int i=0; i<adj.size(); i++)
         adj[i] = vector<string>(n_vertices);
 
 	// Choosing start and end node    
-	int source = 2, dest = 3;
+	int source = 0, dest = 2;
 
 	// add_edge function adds coordinates to given source and destination
 	// (source, destination, coord source-destination, coord destination-source)
@@ -216,7 +233,7 @@ int main()
 	for(int i = 0; i<turns.size(); i++)
 	    cout << turns[i];
     cout << "\nRobot Facing: ";
-	cout << convert_coordinate(robot_facing);
+	cout << convert_value(robot_facing);
 	
 	return 0;
 }
