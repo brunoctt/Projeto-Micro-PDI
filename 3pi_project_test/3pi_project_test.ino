@@ -11,16 +11,17 @@
 int convert_coordinate(char direction);
 char convert_to_turn(int turn);
 char get_turn(char direction, int *robot_facing);
+void add_edge(int src, int dest, String fdir, String sdir);
 Vector<char> create_path_turns(int source, int destination, int *robot_facing);
+Vector<int> create_path_coordinates(int src, int dest);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
 const int n_vertices = 11;
 // 2d array of vectors is used to store the graph in the form of an adjacency list
-Vector<Vector<String>> adj;
+String adj[n_vertices][n_vertices];
 int robot_facing = convert_coordinate('N');
 int robot_location = 0;
-
 
 const char welcome[] PROGMEM = ">g32>>c32";
 
@@ -33,7 +34,6 @@ void add_edge(int src, int dest, String fdir, String sdir)
   adj[dest][src] = sdir;
 }
 
-
 void setup(){
   unsigned int counter; 
   Serial.begin(9600);
@@ -41,13 +41,21 @@ void setup(){
 
   OrangutanBuzzer::playFromProgramSpace(welcome);
   delay(1000);
+
+  int bat = read_battery_millivolts();
+
+//  if (!Serial.available()){
+//    Serial.println("Battery Level:");
+//    Serial.print(bat);
+//    Serial.println(" mV");
+//    Serial.println("=============================");
+//    }
   
   while (!OrangutanPushbuttons::isPressed(BUTTON_B)){
     }
   
   OrangutanPushbuttons::waitForRelease(BUTTON_B);
   delay(1000);
-
 
   for (counter=0; counter<=80; counter++)
   {
@@ -61,41 +69,22 @@ void setup(){
     delay(20);
   }
 
-  OrangutanMotors::setSpeeds(0, 0);
-
-  // Initializing direction robot is facing
-	for (int i=0; i<adj.size(); i++){
-      String aux[n_vertices];
-      Vector<String> v(aux);
-      adj.push_back(v);
-	}
-
+  OrangutanMotors::setSpeeds(0, 0); 
+  
   // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
   add_edge(0, 1, "NE", "WS");
-	add_edge(1, 2, "N", "S");
-	add_edge(1, 4, "SE", "WN");
-	add_edge(1, 5, "E", "W");
-	add_edge(2, 3, "NWN", "SES");
-	add_edge(2, 6, "E", "W");
-	add_edge(2, 10, "W", "E");
-	add_edge(3, 7, "EE", "WW");
-	add_edge(3, 8, "EN", "SW");
-	add_edge(3, 9, "N", "S");
-
-//  int bat = read_battery_millivolts();
-//
-//  if (!Serial.available()){
-//    Serial.println("Battery Level:");
-//    Serial.print(bat);
-//    Serial.println(" mV");
-//    Serial.println("=============================");
-//    }
-    
-  
+//  add_edge(1, 2,"N", "S");
+//  add_edge(1, 4, "SE", "WN");
+//  add_edge(1, 5, "E", "W");
+//  add_edge(2, 3, "NWN", "SES");
+//  add_edge(2, 6, "E", "W");
+//  add_edge(2, 10, "W", "E");
+//  add_edge(3, 7, "EE", "WW");
+//  add_edge(3, 8, "EN", "SW");
+//  add_edge(3, 9, "N", "S");
 }
 
 void loop(){
-
   while (!Serial.available()){}
 
   unsigned int target = 0;
@@ -104,29 +93,36 @@ void loop(){
     target = Serial.parseInt();
   }
 
+  Serial.println(adj[0][1]);
   Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
-  int i;
-  for (i=0; i < sizeof(path); i++){  // sizeof()
+  Serial.println("Path");
+  for (char p: path)
+    Serial.println(p);
+  Serial.println("RF");
+  Serial.println(robot_facing);
+  delay(5000);
 
-    follow_segment();
-
-    OrangutanMotors::setSpeeds(40, 40);
-    delay(220);
-      
-    // Make a turn according to the instruction stored in
-    // path[i].
-    turn(path[i]);
-    delay(10);
-    if (path[i] == 'B'){
-      break;
-    }
-  }
-
-  // Once robot reaches destination, change its location to dest
-  robot_location = target;
-
-  Serial.println('0');
-  OrangutanMotors::setSpeeds(0, 0);
-  delay(500);
+//  for (int i=0; i < sizeof(path); i++){  // sizeof()
+//
+//    follow_segment();
+//
+//    OrangutanMotors::setSpeeds(40, 40);
+//    delay(220);
+//      
+//    // Make a turn according to the instruction stored in
+//    // path[i].
+//    turn(path[i]);
+//    delay(10);
+//    if (path[i] == 'B'){
+//      break;
+//    }
+//  }
+//
+//  // Once robot reaches destination, change its location to dest
+//  robot_location = target;
+//
+//  Serial.println('0');
+//  OrangutanMotors::setSpeeds(0, 0);
+//  delay(500);
 }

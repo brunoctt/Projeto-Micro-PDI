@@ -4,48 +4,49 @@
 
 /**
     BFS algorithm that stores predecessor of each vertex in array p 
-	and its distance from source in array d
+  and its distance from source in array d
 */
 bool BFS(int src, int dest, int pred[], int dist[])
 {
-	// queue to maintain vertices whose adjacency is to be scanned
-	Vector<int> queue;
-	queue.push_back(src);
+  // queue to maintain vertices whose adjacency is to be scanned
+  int q[n_vertices];
+  Vector<int> queue(q);
+  queue.push_back(src);
 
-	// initially all vertices are unvisited so visited if false for all values
-	Vector<bool> visited;
-    for (int i = 0; i < n_vertices; i++)
-        visited.push_back(false);
-	
-	// since no path is yet constructed dist is set to infinity for all values
-	for (int i = 0; i < n_vertices; i++) {
-		dist[i] = 99;
-		pred[i] = -1;
-	}
+  // initially all vertices are unvisited so visited if false for all values
+  bool visited[n_vertices];
+  for (int i = 0; i < n_vertices; i++)
+      visited[i] = false;
+  
+  // since no path is yet constructed dist is set to infinity for all values
+  for (int i = 0; i < n_vertices; i++) {
+    dist[i] = 99;
+    pred[i] = -1;
+  }
 
-	// source is first to be visited and distance to itself is 0
-	visited[src] = true;
-	dist[src] = 0;
-	
-	// standard BFS algorithm
-	while (!queue.empty()) {
-		int u = queue[0];
-		queue.remove(0);
-		for (int i = 0; i < n_vertices; i++) {
-			if (visited[i] == false && adj[u][i][0]) {
-				visited[i] = true;
-				dist[i] = dist[u] + 1;
-				pred[i] = u;
-				queue.push_back(i);
+  // source is first to be visited and distance to itself is 0
+  visited[src] = true;
+  dist[src] = 0;
+  
+  // standard BFS algorithm
+  while (!queue.empty()) {
+    int u = queue[0];
+    queue.remove(0);
+    for (int i = 0; i < n_vertices; i++) {
+      if (visited[i] == false && adj[u][i][0]) {
+        visited[i] = true;
+        dist[i] = dist[u] + 1;
+        pred[i] = u;
+        queue.push_back(i);
 
-				// BFS stops when destination is found.
-				if (i == dest)
-					return true;
-			}
-		}
-	}
+        // BFS stops when destination is found.
+        if (i == dest)
+          return true;
+      }
+    }
+  }
 
-	return false;
+  return false;
 }
 
 /**
@@ -53,26 +54,28 @@ bool BFS(int src, int dest, int pred[], int dist[])
 */
 Vector<int> create_path_coordinates(int src, int dest)
 {
-	// Predecessor array stores predecessor of i and distance array stores 
+  // Predecessor array stores predecessor of i and distance array stores 
     // distance of i from s
-	int pred[n_vertices], dist[n_vertices];
-	Vector<int> path;
+  int pred[n_vertices];
+  int dist[n_vertices];
+  int a[n_vertices];
+  Vector<int> path(a);
 
-	// Source and destination are not connected
-	if (BFS(src, dest, pred, dist) == false)
-		return path;
+  // Source and destination are not connected
+  if (BFS(src, dest, pred, dist) == false)
+    return path;
 
-	// Vector path stores the shortest path
-	int crawl = dest;
-	path.push_back(crawl);
-	while (pred[crawl] != -1) {
-		path.push_back(pred[crawl]);
-		crawl = pred[crawl];
-	}
+  // Vector path stores the shortest path
+  int crawl = dest;
+  path.push_back(crawl);
+  while (pred[crawl] != -1) {
+    path.push_back(pred[crawl]);
+    crawl = pred[crawl];
+  }
 
-	// Shortest path length is dist[dest];
-		
-	return path;
+  // Shortest path length is dist[dest];
+    
+  return path;
 }
 
 /**
@@ -81,15 +84,15 @@ Vector<int> create_path_coordinates(int src, int dest)
 */
 Vector<char> create_path_turns(int source, int destination, int *robot_facing)  // , char (*adj)[n_vertices][3]
 {
-    
-    Vector<char> turns;
+    char t[99];
+    Vector<char> turns(t);
     // Gets path in general coordinates to later convert to turns
     Vector<int> path = create_path_coordinates(source, destination);
     
     // Converting path to turns vector
     for (int i = path.size() - 1; i > 0; i--){
-        for (int j = 0; j < adj[path[i]][path[i-1]].size(); j++){
-            char t = get_turn(adj[path[i]][path[i-1]][j], robot_facing);
+        for (char j: adj[path[i]][path[i-1]]){
+            char t = get_turn(j, robot_facing);
             turns.push_back(t);
         }
     }
@@ -97,8 +100,8 @@ Vector<char> create_path_turns(int source, int destination, int *robot_facing)  
     // At the end of the path, turns robot around
     turns.push_back('B');
     *robot_facing = (*robot_facing + 2) % 4;
-	
-	return turns;
+  
+  return turns;
 }
 /**
     Calculates next turn given direction robot must go and direction its facing
