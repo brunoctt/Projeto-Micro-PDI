@@ -92,6 +92,8 @@ Vector<char> create_path_turns(int source, int destination, int *robot_facing)  
     // Converting path to turns vector
     for (int i = path.size() - 1; i > 0; i--){
         for (char j: adj[path[i]][path[i-1]]){
+            if (j == '\0')
+              break;
             char t = get_turn(j, robot_facing);
             turns.push_back(t);
         }

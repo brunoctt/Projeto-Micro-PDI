@@ -13,13 +13,12 @@ char convert_to_turn(int turn);
 char get_turn(char direction, int *robot_facing);
 void add_edge(int src, int dest, String fdir, String sdir);
 Vector<char> create_path_turns(int source, int destination, int *robot_facing);
-Vector<int> create_path_coordinates(int src, int dest);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
 const int n_vertices = 11;
 // 2d array of vectors is used to store the graph in the form of an adjacency list
-String adj[n_vertices][n_vertices];
+char adj[n_vertices][n_vertices][4];
 int robot_facing = convert_coordinate('N');
 int robot_location = 0;
 
@@ -28,10 +27,10 @@ const char welcome[] PROGMEM = ">g32>>c32";
 /**
     Inputs relation between two nodes into adjacency matrix
 */
-void add_edge(int src, int dest, String fdir, String sdir)
+void add_edge(int src, int dest, char fdir[], char sdir[])
 {
-  adj[src][dest] = fdir;
-  adj[dest][src] = sdir;
+  strcpy(adj[src][dest], fdir);
+  strcpy(adj[dest][src], sdir);
 }
 
 void setup(){
@@ -44,12 +43,12 @@ void setup(){
 
   int bat = read_battery_millivolts();
 
-//  if (!Serial.available()){
-//    Serial.println("Battery Level:");
-//    Serial.print(bat);
-//    Serial.println(" mV");
-//    Serial.println("=============================");
-//    }
+  if (!Serial.available()){
+    Serial.println("Battery Level:");
+    Serial.print(bat);
+    Serial.println(" mV");
+    Serial.println("=============================");
+    }
   
   while (!OrangutanPushbuttons::isPressed(BUTTON_B)){
     }
@@ -73,27 +72,38 @@ void setup(){
   
   // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
   add_edge(0, 1, "NE", "WS");
-//  add_edge(1, 2,"N", "S");
-//  add_edge(1, 4, "SE", "WN");
-//  add_edge(1, 5, "E", "W");
-//  add_edge(2, 3, "NWN", "SES");
-//  add_edge(2, 6, "E", "W");
-//  add_edge(2, 10, "W", "E");
-//  add_edge(3, 7, "EE", "WW");
-//  add_edge(3, 8, "EN", "SW");
-//  add_edge(3, 9, "N", "S");
+  add_edge(1, 2,"N", "S");
+  add_edge(1, 4, "SE", "WN");
+  add_edge(1, 5, "E", "W");
+  add_edge(2, 3, "NWN", "SES");
+  add_edge(2, 6, "E", "W");
+  add_edge(2, 10, "W", "E");
+  add_edge(3, 7, "EE", "WW");
+  add_edge(3, 8, "EN", "SW");
+  add_edge(3, 9, "N", "S");
+  Serial.println("Connections list:");
+  for (int i =0; i<n_vertices; i++){
+    for (int j =0; j<n_vertices; j++){
+      if (adj[i][j][0] != '\0'){
+        Serial.print(i);
+        Serial.print('-');
+        Serial.println(j);
+        Serial.println(adj[i][j]);
+  }}}
 }
 
 void loop(){
+  Serial.println("\n");
+  Serial.print("Current robot location: ");
+  Serial.println(robot_location);
+  Serial.println("Input destination:");
+  
   while (!Serial.available()){}
-
   unsigned int target = 0;
-
   if (Serial.available()){
     target = Serial.parseInt();
   }
 
-  Serial.println(adj[0][1]);
   Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
   Serial.println("Path");
