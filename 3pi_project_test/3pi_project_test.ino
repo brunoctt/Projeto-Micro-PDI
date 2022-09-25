@@ -36,20 +36,12 @@ void add_edge(int src, int dest, char fdir[], char sdir[])
 void setup(){
   unsigned int counter; 
   Serial.begin(9600);
+  Serial.setTimeout(1);
   robot.init(2000);
 
   OrangutanBuzzer::playFromProgramSpace(welcome);
   delay(1000);
 
-  int bat = read_battery_millivolts();
-
-  if (!Serial.available()){
-    Serial.println("Battery Level:");
-    Serial.print(bat);
-    Serial.println(" mV");
-    Serial.println("=============================");
-    }
-  
   while (!OrangutanPushbuttons::isPressed(BUTTON_B)){
     }
   
@@ -67,6 +59,14 @@ void setup(){
 
     delay(20);
   }
+
+  int bat = read_battery_millivolts();
+  if (!Serial.available()){
+    Serial.println("Battery Level:");
+    Serial.print(bat);
+    Serial.println(" mV");
+    Serial.println("=============================");
+    }
 
   OrangutanMotors::setSpeeds(0, 0); 
   
@@ -97,42 +97,43 @@ void loop(){
   Serial.print("Current robot location: ");
   Serial.println(robot_location);
   Serial.println("Input destination:");
-  
+
   while (!Serial.available()){}
-  unsigned int target = 0;
-  if (Serial.available()){
+  int target = -1;
+  if (Serial.available())
     target = Serial.parseInt();
-  }
 
-  Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
+  if (target != 0){
+    if (target == -1)
+      target = 0;
+    Serial.println("Target:");
+    Serial.println(target);
+    
+    Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
-  Serial.println("Path");
-  for (char p: path)
-    Serial.println(p);
-  Serial.println("RF");
-  Serial.println(robot_facing);
-  delay(5000);
-
-//  for (int i=0; i < sizeof(path); i++){  // sizeof()
-//
-//    follow_segment();
-//
-//    OrangutanMotors::setSpeeds(40, 40);
-//    delay(220);
-//      
-//    // Make a turn according to the instruction stored in
-//    // path[i].
-//    turn(path[i]);
-//    delay(10);
-//    if (path[i] == 'B'){
-//      break;
-//    }
-//  }
-//
-//  // Once robot reaches destination, change its location to dest
-//  robot_location = target;
-//
-//  Serial.println('0');
-//  OrangutanMotors::setSpeeds(0, 0);
-//  delay(500);
+    for (int i=0; i < sizeof(path); i++){
+  
+      Serial.println(path[i]);
+      if (i == 0 && path[i] == 'S')
+        continue;
+        
+      follow_segment();
+  
+      OrangutanMotors::setSpeeds(40, 40);
+      delay(220);
+        
+      // Make a turn according to the instruction stored in
+      // path[i].
+      turn(path[i]);
+      delay(10);
+      if (path[i] == 'B'){
+        break;
+      }
+    }
+  
+    // Once robot reaches destination, change its location to dest
+    robot_location = target;
+    OrangutanMotors::setSpeeds(0, 0);
+  }
+  delay(2000);
 }
