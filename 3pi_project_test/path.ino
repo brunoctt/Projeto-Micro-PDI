@@ -99,12 +99,30 @@ Vector<char> create_path_turns(int source, int destination, int *robot_facing)  
         }
     }
 
-    // At the end of the path, turns robot around
-    turns.push_back('B');
-    *robot_facing = (*robot_facing + 2) % 4;
-  
+    // At the end of the path, turns robot around, if path is found
+    if (turns.size() > 0){
+      turns.push_back('B');
+      *robot_facing = (*robot_facing + 2) % 4;
+      }
+      
   return turns;
 }
+
+/**
+    Returns if node is auxiliary (connected to more than 1 other node) or final 
+    (connected to only 1 other)
+    Auxiliary = False / Final = True
+*/
+bool final_node(int node){
+  int connected_nodes = 0;
+  for (int i = 0; i < n_vertices; i++){
+    if (adj[node][i][0] != '\0')
+      connected_nodes++;
+    }
+  return connected_nodes <= 1;
+}
+
+
 /**
     Calculates next turn given direction robot must go and direction its facing
     using a modulo 4 operation and int equivalent of coordinate

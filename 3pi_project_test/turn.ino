@@ -25,8 +25,9 @@ void turn(unsigned char dir)
   case 'B':
     // Turn around.
     OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
-    delay(680);
-    return;
+    break;
+//    delay(680);
+//    return;
   case 'S':
     // Don't do anything!
     return;
