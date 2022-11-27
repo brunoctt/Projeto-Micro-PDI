@@ -118,13 +118,24 @@ void loop(){
       Serial.print("Robot already at node ");
       Serial.println(target);
       return;
+    } else if (target < 0 || target  >= n_vertices){
+      Serial.print("Invalid node number: ");
+      Serial.println(target);
+      return;
     }
 
     Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
+
+    // informing path to be followed
+//    for (char p: path)
+//      Serial.print(p);
+//    Serial.println();
+//    Serial.println(path.size());
   
-    for (int i=0; i < sizeof(path); i++){
+    for (int i=0; i < path.size(); i++){
   
       Serial.println(path[i]);
+      // Since already follows segment, no need to follow first instruction if 'S'
       if (i == 0 && path[i] == 'S')
         continue;
         
@@ -133,9 +144,22 @@ void loop(){
       OrangutanMotors::setSpeeds(40, 40);
       delay(220);
 
+      // If destination is auxiliary node, doesnt 180
       if (path[i] == 'B' && !final_node(target)){
         robot_facing = (robot_facing + 2) % 4;
         break;
+      }
+
+      // Navigation Debugger
+      bool debug = false;
+      if (debug){
+        Serial.print("Turn ");
+        Serial.print(i+1);
+        Serial.print(" of ");
+        Serial.println(path.size());
+        OrangutanMotors::setSpeeds(0, 0);
+        delay(2000);
+        OrangutanMotors::setSpeeds(40, 40);
       }
         
       // Make a turn according to the instruction stored in
