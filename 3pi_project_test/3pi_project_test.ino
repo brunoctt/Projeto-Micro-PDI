@@ -97,7 +97,7 @@ void loop(){
   Serial.println("\n");
   Serial.print("Current robot location: ");
   Serial.println(robot_location);
-  Serial.println("Input destination:");
+  Serial.println("Enter destination:");
 
   while (!Serial.available()){}
   int target = -1;
@@ -114,8 +114,12 @@ void loop(){
     Serial.println("Target:");
     Serial.println(target);
     
-    if (robot_location == target)
+    if (robot_location == target){
+      Serial.print("Robot already at node ");
+      Serial.println(target);
       return;
+    }
+
     Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
     for (int i=0; i < sizeof(path); i++){
