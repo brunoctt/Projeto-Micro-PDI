@@ -13,6 +13,7 @@ char convert_to_turn(int turn);
 char get_turn(char direction, int *robot_facing);
 void add_edge(int src, int dest, String fdir, String sdir);
 Vector<char> create_path_turns(int source, int destination, int *robot_facing);
+bool final_node(int node);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
@@ -36,7 +37,7 @@ void add_edge(int src, int dest, char fdir[], char sdir[])
 void setup(){
   unsigned int counter; 
   Serial.begin(9600);
-  Serial.setTimeout(1);
+  //Serial.setTimeout(1);
   robot.init(2000);
 
   OrangutanBuzzer::playFromProgramSpace(welcome);
@@ -100,8 +101,12 @@ void loop(){
 
   while (!Serial.available()){}
   int target = -1;
-  if (Serial.available())
+  if (Serial.available()){
     target = Serial.parseInt();
+//    String r = Serial.readString();
+//    Serial.println(r);
+//    target = r.toInt();
+  }
 
   if (target != 0){
     if (target == -1)
@@ -109,6 +114,8 @@ void loop(){
     Serial.println("Target:");
     Serial.println(target);
     
+    if (robot_location == target)
+      return;
     Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
   
     for (int i=0; i < sizeof(path); i++){
@@ -121,6 +128,11 @@ void loop(){
   
       OrangutanMotors::setSpeeds(40, 40);
       delay(220);
+
+      if (path[i] == 'B' && !final_node(target)){
+        robot_facing = (robot_facing + 2) % 4;
+        break;
+      }
         
       // Make a turn according to the instruction stored in
       // path[i].
