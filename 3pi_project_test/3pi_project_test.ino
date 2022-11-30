@@ -17,7 +17,8 @@ bool final_node(int node);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
-const int n_vertices = 11;
+const int n_vertices = 12;
+const int aux_vertices = 4;
 // 2d array of vectors is used to store the graph in the form of an adjacency list
 char adj[n_vertices][n_vertices][4];
 int robot_facing = convert_coordinate('N');
@@ -72,16 +73,19 @@ void setup(){
     }
 
   // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
-  add_edge(0, 1, "NE", "WS");
-  add_edge(1, 2,"N", "S");
-  add_edge(1, 4, "SE", "WN");
-  add_edge(1, 5, "E", "W");
-  add_edge(2, 3, "NWN", "SES");
-  add_edge(2, 6, "E", "W");
-  add_edge(2, 10, "W", "E");
-  add_edge(3, 7, "EE", "WW");
-  add_edge(3, 8, "EN", "SW");
-  add_edge(3, 9, "N", "S");
+  // Auxiliary nodes are noted as negative, so they are the last n from n_vertices
+  add_edge(0, 11, "NE", "WS");
+  add_edge(11, 10,"N", "S");
+  add_edge(11, 1, "SE", "WN");
+  add_edge(11, 2, "E", "W");
+  add_edge(10, 9, "NWN", "SES");
+  add_edge(10, 3, "E", "W");
+  add_edge(10, 7, "W", "E");
+  add_edge(9, 6, "N", "S");
+  add_edge(9, 8, "E", "W");
+  add_edge(8, 4, "E", "W");
+  add_edge(8, 5, "N", "S");
+  
   Serial.println("Connections list:");
   for (int i =0; i<n_vertices; i++){
     for (int j =0; j<n_vertices; j++){
@@ -113,34 +117,34 @@ void loop(){
   Serial.println("Enter destination:");
 
   while (!Serial.available()){}
-  int target = -1;
+  int target = 0;
   if (Serial.available()){
     target = Serial.parseInt();
   }
 
-  if (target != 0){
-    if (target == -1)
-      target = 0;
-    Serial.println("Target:");
+  if (robot_location == target){
+    Serial.print("Robot already at node ");
     Serial.println(target);
-    
-    if (robot_location == target){
-      Serial.print("Robot already at node ");
-      Serial.println(target);
-      return;
-    } else if (target < 0 || target  >= n_vertices){
+    return;
+  } else if (target < -aux_vertices || target  >= n_vertices){
       Serial.print("Invalid node number: ");
       Serial.println(target);
       return;
-    }
+  } else {
+    // Valid negative valid means going to auxiliary node
+    if (target < 0)
+      target = n_vertices + target;
+    
+    Serial.println("Moving to target:");
+    Serial.println(target);
 
     Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
 
     // informing path to be followed
-//    for (char p: path)
-//      Serial.print(p);
-//    Serial.println();
-//    Serial.println(path.size());
+    // for (char p: path)
+    //    Serial.print(p);
+    //  Serial.println();
+    //  Serial.println(path.size());
   
     for (int i=0; i < path.size(); i++){
   
