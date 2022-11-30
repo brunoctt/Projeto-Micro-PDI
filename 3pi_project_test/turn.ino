@@ -26,10 +26,9 @@ void turn(unsigned char dir)
     // Turn around.
     OrangutanMotors::setSpeeds(turn_intensity, -turn_intensity);
     break;
-//    delay(680);
-//    return;
   case 'S':
-    // Don't do anything!
+    // Keep going.
+    OrangutanMotors::setSpeeds(40, 40);
     return;
   }
   delay(80);

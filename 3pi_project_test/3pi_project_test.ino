@@ -61,6 +61,8 @@ void setup(){
     delay(20);
   }
 
+  OrangutanMotors::setSpeeds(0, 0); 
+
   int bat = read_battery_millivolts();
   if (!Serial.available()){
     Serial.println("Battery Level:");
@@ -69,8 +71,6 @@ void setup(){
     Serial.println("=============================");
     }
 
-  OrangutanMotors::setSpeeds(0, 0); 
-  
   // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
   add_edge(0, 1, "NE", "WS");
   add_edge(1, 2,"N", "S");
@@ -91,6 +91,19 @@ void setup(){
         Serial.println(j);
         Serial.println(adj[i][j]);
   }}}
+
+  Serial.println("Enter robot location: ");
+  while (!Serial.available()){}
+  if (Serial.available()){
+    int rl = Serial.parseInt();
+    if (rl < 0 || rl  >= n_vertices){
+      Serial.print("Invalid node number: ");
+      Serial.println(rl);
+      Serial.print("Using default value 0");
+    }
+    else
+      robot_location = rl;
+  }
 }
 
 void loop(){
@@ -103,9 +116,6 @@ void loop(){
   int target = -1;
   if (Serial.available()){
     target = Serial.parseInt();
-//    String r = Serial.readString();
-//    Serial.println(r);
-//    target = r.toInt();
   }
 
   if (target != 0){
@@ -139,10 +149,11 @@ void loop(){
       if (i == 0 && path[i] == 'S')
         continue;
         
-      follow_segment();
-  
-      OrangutanMotors::setSpeeds(40, 40);
-      delay(220);
+      if (i > 0){
+        follow_segment();
+        OrangutanMotors::setSpeeds(40, 40);
+        delay(220);
+      }
 
       // If destination is auxiliary node, doesnt 180
       if (path[i] == 'B' && !final_node(target)){
