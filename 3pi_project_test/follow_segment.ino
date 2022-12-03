@@ -32,7 +32,7 @@ void follow_segment()
 
     // Compute the actual motor settings.  We never set either motor
     // to a negative value.
-    const int maximum = 50; // the maximum speed
+    const int maximum = 60; // the maximum speed
     if (power_difference > maximum)
       power_difference = maximum;
     if (power_difference < -maximum)

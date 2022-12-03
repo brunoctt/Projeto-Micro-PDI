@@ -10,7 +10,7 @@
 
 void turn(unsigned char dir)
 {
-  const int turn_intensity = 55;
+  const int turn_intensity = 40;
     
   switch(dir)
   {
@@ -28,7 +28,7 @@ void turn(unsigned char dir)
     break;
   case 'S':
     // Keep going.
-    OrangutanMotors::setSpeeds(40, 40);
+    OrangutanMotors::setSpeeds(50, 50);
     return;
   }
   delay(80);

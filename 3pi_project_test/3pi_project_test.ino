@@ -160,8 +160,13 @@ void loop(){
       
     if (i > 0){
       follow_segment();
-      OrangutanMotors::setSpeeds(40, 40);
-      delay(220);
+      if (path[i] == 'S'){
+        OrangutanMotors::setSpeeds(50, 50);
+        delay(150);
+      } else {
+        OrangutanMotors::setSpeeds(40, 40);
+        delay(200);
+      }
     }
 
     // If destination is auxiliary node, doesnt 180
@@ -185,7 +190,7 @@ void loop(){
     // Make a turn according to the instruction stored in
     // path[i].
     turn(path[i]);
-    delay(10);
+//    delay(10);
     if (path[i] == 'B'){
       break;
     }
