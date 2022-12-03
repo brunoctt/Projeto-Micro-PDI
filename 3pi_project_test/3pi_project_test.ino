@@ -35,10 +35,37 @@ void add_edge(int src, int dest, char fdir[], char sdir[])
   strcpy(adj[dest][src], sdir);
 }
 
+int validate_input(bool validating_location){
+  while (true){
+    if (Serial.available()){
+      String r = Serial.readString();
+      r.trim(); // remove leading trailing white space e.g. CR etc
+      int result = r.toInt();
+      if (r != (String(result))) {
+        Serial.print(r); Serial.println(" is not an integer");
+        if (validating_location)
+          Serial.println("Enter robot location: ");
+        else
+          Serial.println("Enter destination:");
+      } else if (robot_location == result && !validating_location){
+        Serial.print("Robot already at node "); Serial.println(result);
+        Serial.println("Enter destination:");
+      } else if (result < 0 || result  >= n_vertices - aux_vertices){
+        Serial.print("Invalid node number: ");
+        Serial.println(result);
+        if (validating_location)
+          Serial.println("Enter robot location: ");
+        else
+          Serial.println("Enter destination:");
+      } else{
+        Serial.println(result);
+        return result;
+      }
+  }}}  
+
 void setup(){
   unsigned int counter; 
   Serial.begin(9600);
-  //Serial.setTimeout(1);
   robot.init(2000);
 
   OrangutanBuzzer::playFromProgramSpace(welcome);
@@ -98,16 +125,11 @@ void setup(){
 
   Serial.println("Enter robot location: ");
   while (!Serial.available()){}
-  if (Serial.available()){
-    int rl = Serial.parseInt();
-    if (rl < 0 || rl  >= n_vertices){
-      Serial.print("Invalid node number: ");
-      Serial.println(rl);
-      Serial.print("Using default value 0");
-    }
-    else
-      robot_location = rl;
-  }
+  robot_location = validate_input(true);
+  for (int i =0; i<n_vertices; i++){
+    if (adj[robot_location][i][0] != '\0'){
+      robot_facing = convert_coordinate(adj[robot_location][i][0]);
+  }}
 }
 
 void loop(){
@@ -117,78 +139,60 @@ void loop(){
   Serial.println("Enter destination:");
 
   while (!Serial.available()){}
-  int target = 0;
-  if (Serial.available()){
-    target = Serial.parseInt();
-  }
+  int target = validate_input(false);;
+  Serial.println("Moving to target:");
+  Serial.println(target);
 
-  if (robot_location == target){
-    Serial.print("Robot already at node ");
-    Serial.println(target);
-    return;
-  } else if (target < -aux_vertices || target  >= n_vertices){
-      Serial.print("Invalid node number: ");
-      Serial.println(target);
-      return;
-  } else {
-    // Valid negative valid means going to auxiliary node
-    if (target < 0)
-      target = n_vertices + target;
-    
-    Serial.println("Moving to target:");
-    Serial.println(target);
+  Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
 
-    Vector<char> path = create_path_turns(robot_location, target, &robot_facing);
+  // informing path to be followed
+  // for (char p: path)
+  //    Serial.print(p);
+  //  Serial.println();
+  //  Serial.println(path.size());
 
-    // informing path to be followed
-    // for (char p: path)
-    //    Serial.print(p);
-    //  Serial.println();
-    //  Serial.println(path.size());
-  
-    for (int i=0; i < path.size(); i++){
-  
-      Serial.println(path[i]);
-      // Since already follows segment, no need to follow first instruction if 'S'
-      if (i == 0 && path[i] == 'S')
-        continue;
-        
-      if (i > 0){
-        follow_segment();
-        OrangutanMotors::setSpeeds(40, 40);
-        delay(220);
-      }
+  for (int i=0; i < path.size(); i++){
 
-      // If destination is auxiliary node, doesnt 180
-      if (path[i] == 'B' && !final_node(target)){
-        robot_facing = (robot_facing + 2) % 4;
-        break;
-      }
-
-      // Navigation Debugger
-      bool debug = false;
-      if (debug){
-        Serial.print("Turn ");
-        Serial.print(i+1);
-        Serial.print(" of ");
-        Serial.println(path.size());
-        OrangutanMotors::setSpeeds(0, 0);
-        delay(2000);
-        OrangutanMotors::setSpeeds(40, 40);
-      }
-        
-      // Make a turn according to the instruction stored in
-      // path[i].
-      turn(path[i]);
-      delay(10);
-      if (path[i] == 'B'){
-        break;
-      }
+    Serial.println(path[i]);
+    // Since already follows segment, no need to follow first instruction if 'S'
+    if (i == 0 && path[i] == 'S')
+      continue;
+      
+    if (i > 0){
+      follow_segment();
+      OrangutanMotors::setSpeeds(40, 40);
+      delay(220);
     }
-  
-    // Once robot reaches destination, change its location to dest
-    robot_location = target;
-    OrangutanMotors::setSpeeds(0, 0);
+
+    // If destination is auxiliary node, doesnt 180
+    if (path[i] == 'B' && !final_node(target)){
+      robot_facing = (robot_facing + 2) % 4;
+      break;
+    }
+
+    // Navigation Debugger
+    bool debug = false;
+    if (debug){
+      Serial.print("Turn ");
+      Serial.print(i+1);
+      Serial.print(" of ");
+      Serial.println(path.size());
+      OrangutanMotors::setSpeeds(0, 0);
+      delay(2000);
+      OrangutanMotors::setSpeeds(40, 40);
+    }
+      
+    // Make a turn according to the instruction stored in
+    // path[i].
+    turn(path[i]);
+    delay(10);
+    if (path[i] == 'B'){
+      break;
+    }
   }
-  delay(2000);
+
+  // Once robot reaches destination, change its location to dest
+  robot_location = target;
+  OrangutanMotors::setSpeeds(0, 0);
+  delay(1000);
 }
