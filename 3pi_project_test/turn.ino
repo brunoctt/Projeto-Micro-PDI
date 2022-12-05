@@ -31,7 +31,7 @@ void turn(unsigned char dir)
     OrangutanMotors::setSpeeds(50, 50);
     return;
   }
-  delay(80);
+  delay(100);
   do{
     robot.readLine(sensors);
   } while(sensors[2] <= 950);
