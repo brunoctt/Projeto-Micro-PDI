@@ -3,11 +3,10 @@ __pycache__/
 duvidas.txt
 todo.txt
 ideias.txt
-*.jpeg
 test_centers.json
-Projeto Micro.zip
+*.zip
 .vscode/
+.idea/
 Ignore/
 Reuniões/
-NewPing-master.zip
 conexoes.txt

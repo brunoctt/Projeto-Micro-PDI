@@ -1,3 +1,0 @@
-Rx hc-06 = red = PD1 (tx 3pi)
-Roxo/vinho = vcc
-Gnd compartilhado com outros 2
