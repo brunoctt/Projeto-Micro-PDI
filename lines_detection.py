@@ -62,21 +62,21 @@ class HoughBundler:
         px, py = point
         x1, y1, x2, y2 = line
 
-        def line_magnitude(x1, y1, x2, y2):
-            line_magnitude = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2))
-            return line_magnitude
+        def line_magnitude(x1_, y1_, x2_, y2_):
+            line_mag = math.sqrt((x2_ - x1_) ** 2 + (y2_ - y1_) ** 2)
+            return line_mag
 
-        lmag = line_magnitude(x1, y1, x2, y2)
-        if lmag < 0.00000001:
+        l_mag = line_magnitude(x1, y1, x2, y2)
+        if l_mag < 0.00000001:
             distance_point_to_line = 9999
             return distance_point_to_line
 
         u1 = (((px - x1) * (x2 - x1)) + ((py - y1) * (y2 - y1)))
-        u = u1 / (lmag * lmag)
+        u = u1 / (l_mag * l_mag)
 
         if (u < 0.00001) or (u > 1):
-            # // closest point does not fall within the line segment, take the shorter distance
-            # // to an endpoint
+            # closest point does not fall within the line segment, take the shorter distance
+            # to an endpoint
             ix = line_magnitude(px, py, x1, y1)
             iy = line_magnitude(px, py, x2, y2)
             if ix > iy:
@@ -91,20 +91,20 @@ class HoughBundler:
 
         return distance_point_to_line
 
-    def get_distance(self, a_line, b_line):
-        dist1 = self.distance_point_to_line(a_line[:2], b_line)
-        dist2 = self.distance_point_to_line(a_line[2:], b_line)
-        dist3 = self.distance_point_to_line(b_line[:2], a_line)
-        dist4 = self.distance_point_to_line(b_line[2:], a_line)
+    def get_distance(self, line1, line2):
+        dist1 = self.distance_point_to_line(line1[:2], line2)
+        dist2 = self.distance_point_to_line(line1[2:], line2)
+        dist3 = self.distance_point_to_line(line2[:2], line1)
+        dist4 = self.distance_point_to_line(line2[2:], line1)
 
         return min(dist1, dist2, dist3, dist4)
 
-    def merge_lines_into_groups(self, lines):
-        groups = list()  ## all lines groups are here
+    def merge_lines_into_groups(self, lines_list):
+        groups = list()  # all lines groups are here
         # first line will create new group every time
-        groups.append([lines[0]])
+        groups.append([lines_list[0]])
         # if line is different from existing gropus, create a new group
-        for line_new in lines[1:]:
+        for line_new in lines_list[1:]:
             if self.check_is_line_different(line_new, groups):
                 groups.append([line_new])
 
@@ -149,7 +149,7 @@ class HoughBundler:
         lines_horizontal = sorted(lines_horizontal, key=lambda line: line[0])
         merged_lines_all = []
 
-        # for each cluster in vertical and horizantal lines leave only one line
+        # for each cluster in vertical and horizontal lines leave only one line
         for i in [lines_horizontal, lines_vertical]:
             if len(i) > 0:
                 groups = self.merge_lines_into_groups(i)
