@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from sympy import Point, Line, Segment
 from copy import deepcopy
 import numpy as np
 import math
@@ -193,15 +194,21 @@ for i in range(len(lines)):
     for j in range(len(lines)):
         if i == j:
             continue
-        l_i, l_j = lines[i][0], lines[j][0]
-        if abs((ang_i := get_orientation(l_i)) - (ang_j := get_orientation(l_j))) > 50:
-            if get_distance(l_i, l_j) < 10:
-                if {i, j} not in intersections:
-                    intersections.append({i, j})
-                    print(l_i, l_j, get_distance(l_i, l_j))
-                    continue
-            elif l_i[0] < l_j[0] < l_i[2] and l_j[1] < l_i[1] < l_j[3]:
+        l_i, l_j = Line(lines[i][0][:2], lines[i][0][2:]), Line(lines[j][0][:2], lines[j][0][2:])
+        s_i, s_j = Segment(lines[i][0][:2], lines[i][0][2:]), Segment(lines[j][0][:2], lines[j][0][2:])
+        if math.degrees(l_i.angle_between(l_j)) > 50:
+            inter = l_i.intersection(l_j)
+            if len(inter) == 0:
+                continue
+            inter = inter[0]
+            if inter.distance(s_i) < 10 and inter.distance(s_j) < 10:
                 if {i, j} not in intersections:
                     intersections.append({i, j})
                     print(l_i, l_j)
                     continue
+
+l1 = lines[2][0]
+l2 = lines[8][0]
+sl1 = Line(l1[:2], l1[2:])
+sl2 = Line(l2[:2], l2[2:])
+p = sl2.intersection(sl1)[0]
