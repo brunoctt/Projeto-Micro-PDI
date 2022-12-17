@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
-from sympy import Point, Line, Segment
-from copy import deepcopy
+from sympy import Line, Segment
 import numpy as np
 import math
 import cv2
 
 
-def show_image(img):
-    plt.imshow(img, cmap="gray")
+X_AXIS = Line((0, 0), (10, 0))
+Y_AXIS = Line((0, 0), (0, 10))
+
+
+def show_image(image):
+    plt.imshow(image, cmap="gray")
     plt.show()
 
 
@@ -26,8 +29,8 @@ def distance_point_to_line(point, line):
 
     l_mag = line_magnitude(x1, y1, x2, y2)
     if l_mag < 0.00000001:
-        distance_point_to_line = 9999
-        return distance_point_to_line
+        dist = 9999
+        return dist
 
     u1 = (((px - x1) * (x2 - x1)) + ((py - y1) * (y2 - y1)))
     u = u1 / (l_mag * l_mag)
@@ -38,16 +41,16 @@ def distance_point_to_line(point, line):
         ix = line_magnitude(px, py, x1, y1)
         iy = line_magnitude(px, py, x2, y2)
         if ix > iy:
-            distance_point_to_line = iy
+            dist = iy
         else:
-            distance_point_to_line = ix
+            dist = ix
     else:
         # Intersecting point is on the line, use the formula
         ix = x1 + u * (x2 - x1)
         iy = y1 + u * (y2 - y1)
-        distance_point_to_line = line_magnitude(px, py, ix, iy)
+        dist = line_magnitude(px, py, ix, iy)
 
-    return distance_point_to_line
+    return dist
 
 
 def get_distance(line1, line2):
@@ -76,10 +79,10 @@ class HoughBundler:
         return True
 
     def merge_lines_into_groups(self, lines_list):
-        groups = list()  # all lines groups are here
+        groups = list()
         # first line will create new group every time
         groups.append([lines_list[0]])
-        # if line is different from existing gropus, create a new group
+        # if line is different from existing groups, create a new group
         for line_new in lines_list[1:]:
             if self.check_is_line_different(line_new, groups):
                 groups.append([line_new])
@@ -106,30 +109,29 @@ class HoughBundler:
 
         return np.block([[points[0], points[-1]]])
 
-    def process_lines(self, lines):
+    def process_lines(self, all_lines):
         lines_horizontal = []
         lines_vertical = []
 
-        for line_i in [l[0] for l in lines]:
-            orientation = get_orientation(line_i)
-            # if vertical
+        for line in all_lines:
+            line = line[0]
+            line[::2].sort()
+            line[1::2].sort()
+            orientation = get_orientation(line)
+            # Considering as vertical after passes 45 degrees
             if 45 < orientation <= 90:
-                lines_vertical.append(line_i)
+                lines_vertical.append(line)
             else:
-                lines_horizontal.append(line_i)
+                lines_horizontal.append(line)
 
-        for _l in lines_vertical + lines_horizontal:
-            _l[::2].sort()
-            _l[1::2].sort()
-
-        lines_vertical = sorted(lines_vertical, key=lambda line: line[1])
-        lines_horizontal = sorted(lines_horizontal, key=lambda line: line[0])
+        lines_vertical = sorted(lines_vertical, key=lambda l: l[1])
+        lines_horizontal = sorted(lines_horizontal, key=lambda l: l[0])
         merged_lines_all = []
 
         # for each cluster in vertical and horizontal lines leave only one line
-        for i in [lines_horizontal, lines_vertical]:
-            if len(i) > 0:
-                groups = self.merge_lines_into_groups(i)
+        for g in [lines_horizontal, lines_vertical]:
+            if len(g) > 0:
+                groups = self.merge_lines_into_groups(g)
                 merged_lines = []
                 for group in groups:
                     merged_lines.append(self.merge_line_segments(group))
@@ -140,7 +142,7 @@ class HoughBundler:
 
 """Reading Image"""
 img = cv2.imread('foto_mesa.jpeg')
-show_image(img)
+# show_image(img)
 
 """Finding Contours"""
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -155,7 +157,6 @@ img_contours = cv2.drawContours(img.copy(), contours, -1, (255, 0, 0), 10)
 """Refining Contours"""
 mask = np.zeros((1600, 901, 3), dtype=np.uint8)
 contours_img = cv2.drawContours(mask, contours, -1, (255, 255, 255), 30)
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 # contours_img = cv2.dilate(mask, kernel, iterations=8)
 # contours_img = cv2.erode(dilate, kernel, iterations=10)
 
@@ -163,52 +164,52 @@ kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 thresh = 150
 min_line = 50
 max_line = 100
-bordas = cv2.erode(binary, kernel, iterations=4)
-linhas = cv2.HoughLinesP(bordas, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
-bordas_copia = cv2.cvtColor(bordas, cv2.COLOR_GRAY2BGR)
-for linha in linhas:
-    x1, y1, x2, y2 = linha[0]  # Retorna apenas dois pontos
-    cv2.line(bordas_copia, (x1, y1), (x2, y2), (255, 0, 0), 3)
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+eroded_binary = cv2.erode(binary, kernel, iterations=4)
+hough_lines = cv2.HoughLinesP(eroded_binary, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
+hough_img = cv2.cvtColor(eroded_binary, cv2.COLOR_GRAY2BGR)
+for hl in hough_lines:
+    _x1, _y1, _x2, _y2 = hl[0]
+    cv2.line(hough_img, (_x1, _y1), (_x2, _y2), (255, 0, 0), 3)
 
 """Merging Hough Lines and Contours"""
-merged = cv2.bitwise_and(contours_img, bordas_copia)
-merged = cv2.cvtColor(merged, cv2.COLOR_RGB2GRAY)
-merged = cv2.erode(merged, kernel, iterations=3)
+merged_img = cv2.bitwise_and(contours_img, hough_img)
+merged_img = cv2.cvtColor(merged_img, cv2.COLOR_RGB2GRAY)
+merged_img = cv2.erode(merged_img, kernel, iterations=3)
 
-"""Hough Lines on merged"""
-lines = cv2.HoughLinesP(merged, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
+"""Hough Lines on merged_img"""
+hough_lines = cv2.HoughLinesP(merged_img, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
 bundler = HoughBundler(min_distance=10, min_angle=10)
-lines = bundler.process_lines(lines)
-print(len(lines))
+grouped_lines = bundler.process_lines(hough_lines)
+print(len(grouped_lines))
 kernel = np.ones((5, 5), np.uint8)
-bordas_copia = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
+final_img = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
 
-for linha in lines:
-    x1, y1, x2, y2 = linha[0]
-    cv2.line(bordas_copia, (x1, y1), (x2, y2), (255, 0, 0), 5)
+for gl in grouped_lines:
+    _x1, _y1, _x2, _y2 = gl[0]
+    cv2.line(final_img, (_x1, _y1), (_x2, _y2), (255, 0, 0), 5)
 
-show_image(bordas_copia)
+show_image(final_img)
 
 intersections = []
-for i in range(len(lines)):
-    for j in range(len(lines)):
+for i in range(len(grouped_lines)):
+    for j in range(len(grouped_lines)):
         if i == j:
             continue
-        l_i, l_j = Line(lines[i][0][:2], lines[i][0][2:]), Line(lines[j][0][:2], lines[j][0][2:])
-        s_i, s_j = Segment(lines[i][0][:2], lines[i][0][2:]), Segment(lines[j][0][:2], lines[j][0][2:])
+        l_i, l_j = Line(grouped_lines[i][0][:2], grouped_lines[i][0][2:]), Line(grouped_lines[j][0][:2], grouped_lines[j][0][2:])
         if math.degrees(l_i.angle_between(l_j)) > 50:
             inter = l_i.intersection(l_j)
             if len(inter) == 0:
                 continue
             inter = inter[0]
-            if inter.distance(s_i) < 10 and inter.distance(s_j) < 10:
+            if inter.distance(Segment(*l_i.points)) < 10 and inter.distance(Segment(*l_j.points)) < 10:
                 if {i, j} not in intersections:
                     intersections.append({i, j})
                     print(l_i, l_j)
                     continue
 
-l1 = lines[2][0]
-l2 = lines[8][0]
+l1 = grouped_lines[2][0]
+l2 = grouped_lines[8][0]
 sl1 = Line(l1[:2], l1[2:])
 sl2 = Line(l2[:2], l2[2:])
 p = sl2.intersection(sl1)[0]
