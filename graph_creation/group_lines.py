@@ -1,17 +1,10 @@
-import matplotlib.pyplot as plt
-from sympy import Line, Segment
-import numpy as np
 import math
-import cv2
+import numpy as np
+from sympy import Line, Segment
 
 
 X_AXIS = Line((0, 0), (10, 0))
 Y_AXIS = Line((0, 0), (0, 10))
-
-
-def show_image(image):
-    plt.imshow(image, cmap="gray")
-    plt.show()
 
 
 def get_orientation(line):
@@ -138,78 +131,3 @@ class HoughBundler:
                 merged_lines_all.extend(merged_lines)
 
         return np.asarray(merged_lines_all)
-
-
-"""Reading Image"""
-img = cv2.imread('foto_mesa.jpeg')
-# show_image(img)
-
-"""Finding Contours"""
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-blur = cv2.GaussianBlur(gray, (5, 5), 0)
-_, binary = cv2.threshold(blur, 40, 255, cv2.THRESH_BINARY_INV)
-contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-# Since all lines are connected they will be in the same contour, so just need to get the biggest contour
-idx = np.argmax([c.size for c in contours])
-contours = contours[idx]  # [x, y]
-img_contours = cv2.drawContours(img.copy(), contours, -1, (255, 0, 0), 10)
-
-"""Refining Contours"""
-mask = np.zeros((1600, 901, 3), dtype=np.uint8)
-contours_img = cv2.drawContours(mask, contours, -1, (255, 255, 255), 30)
-# contours_img = cv2.dilate(mask, kernel, iterations=8)
-# contours_img = cv2.erode(dilate, kernel, iterations=10)
-
-"""Finding Hough Lines"""
-thresh = 150
-min_line = 50
-max_line = 100
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-eroded_binary = cv2.erode(binary, kernel, iterations=4)
-hough_lines = cv2.HoughLinesP(eroded_binary, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
-hough_img = cv2.cvtColor(eroded_binary, cv2.COLOR_GRAY2BGR)
-for hl in hough_lines:
-    _x1, _y1, _x2, _y2 = hl[0]
-    cv2.line(hough_img, (_x1, _y1), (_x2, _y2), (255, 0, 0), 3)
-
-"""Merging Hough Lines and Contours"""
-merged_img = cv2.bitwise_and(contours_img, hough_img)
-merged_img = cv2.cvtColor(merged_img, cv2.COLOR_RGB2GRAY)
-merged_img = cv2.erode(merged_img, kernel, iterations=3)
-
-"""Hough Lines on merged_img"""
-hough_lines = cv2.HoughLinesP(merged_img, 1, np.pi / 180, thresh, minLineLength=min_line, maxLineGap=max_line)
-bundler = HoughBundler(min_distance=10, min_angle=10)
-grouped_lines = bundler.process_lines(hough_lines)
-print(len(grouped_lines))
-kernel = np.ones((5, 5), np.uint8)
-final_img = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
-
-for gl in grouped_lines:
-    _x1, _y1, _x2, _y2 = gl[0]
-    cv2.line(final_img, (_x1, _y1), (_x2, _y2), (255, 0, 0), 5)
-
-show_image(final_img)
-
-intersections = []
-for i in range(len(grouped_lines)):
-    for j in range(len(grouped_lines)):
-        if i == j:
-            continue
-        l_i, l_j = Line(grouped_lines[i][0][:2], grouped_lines[i][0][2:]), Line(grouped_lines[j][0][:2], grouped_lines[j][0][2:])
-        if math.degrees(l_i.angle_between(l_j)) > 50:
-            inter = l_i.intersection(l_j)
-            if len(inter) == 0:
-                continue
-            inter = inter[0]
-            if inter.distance(Segment(*l_i.points)) < 10 and inter.distance(Segment(*l_j.points)) < 10:
-                if {i, j} not in intersections:
-                    intersections.append({i, j})
-                    print(l_i, l_j)
-                    continue
-
-l1 = grouped_lines[2][0]
-l2 = grouped_lines[8][0]
-sl1 = Line(l1[:2], l1[2:])
-sl2 = Line(l2[:2], l2[2:])
-p = sl2.intersection(sl1)[0]
