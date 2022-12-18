@@ -130,4 +130,4 @@ class HoughBundler:
                     merged_lines.append(self.merge_line_segments(group))
                 merged_lines_all.extend(merged_lines)
 
-        return np.asarray(merged_lines_all)
+        return merged_lines_all
