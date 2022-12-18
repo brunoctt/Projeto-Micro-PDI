@@ -2,8 +2,40 @@ import numpy as np
 from graph_creation.lines_detection import get_hough_lines_from_image, binary_thresh, show_image
 from graph_creation.group_lines import HoughBundler
 from sympy import Line, Segment
+from collections import Counter
 from math import degrees
 import cv2
+
+
+class Graph:
+    """
+    Class representing a graph where:
+        nodes are destination points (connected to only 1 point);
+        auxiliary_nodes are points where there are more than one path option (connected to more than 2 points);
+        auxiliary_points are point with only one path option (connected to only 2 points);
+        lines are the paths connecting every point
+    """
+    def __init__(self, all_lines, intersections):
+        self.lines = []
+        self.auxiliary_nodes = []
+        self.auxiliary_points = []
+        self.nodes = []
+        # Counter([v for k in intersections.keys() for v in k])
+        for line in all_lines:
+            possible_points = list(line.copy().points)
+            for idx, inter_point in intersections.items():
+                if all_lines.index(line) not in idx:
+                    continue
+                d = np.array([inter_point.distance(_p) for _p in possible_points]) < 30
+                node = np.where(d == True)[0]
+                if len(node) == 0:
+                    continue
+                del possible_points[node[0]]
+                if len(possible_points) == 0:
+                    break
+            if len(possible_points) > 0:
+                for point in possible_points:
+                    self.nodes.append(point)
 
 
 def find_intersections(grouped_lines):
@@ -25,9 +57,8 @@ def find_intersections(grouped_lines):
                     continue
                 _inter = _inter[0]
                 if _inter.distance(Segment(*l_i.points)) < 10 and _inter.distance(Segment(*l_j.points)) < 10:
-                    if {i, j} not in intersections:
-                        intersections.append({i, j})
-                        # print(l_i, l_j)
+                    if {i, j} not in [set(k) for k in intersections.keys()]:
+                        intersections[(i, j)] = _inter
                         continue
     return intersections
 
