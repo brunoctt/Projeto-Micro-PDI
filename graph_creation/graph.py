@@ -1,10 +1,45 @@
 import numpy as np
 from graph_creation.lines_detection import get_hough_lines_from_image, binary_thresh, show_image
 from graph_creation.group_lines import HoughBundler
-from sympy import Line, Segment
-from collections import Counter
+from sympy import Line, Segment, Point2D
 from math import degrees
 import cv2
+
+
+class Node:
+    _id_generator = (i for i in range(1000))
+
+    def __init__(self, coordinates: Point2D):
+        self.id = next(Node._id_generator)
+        self.coordinates = coordinates
+        self.north = self.south = self.east = self.west = None
+
+    def __repr__(self):
+        return f"Node {self.id}"
+
+    @property
+    def connected_to(self):
+        return {
+            'north': self.north,
+            'south': self.south,
+            'east': self.east,
+            'west': self.west
+        }
+
+    @property
+    def amount_of_connections(self):
+        return sum(v is not None for v in self.connected_to.values())
+
+    def coordinate_to_point(self, other):
+        segment = Segment(self.coordinates, other).direction.evalf()
+        direction_val = max(segment.coordinates, key=abs)
+        if direction_val == segment.x:
+            if direction_val < 0:
+                return 'west'
+            return 'east'
+        if direction_val > 0:
+            return 'south'
+        return 'north'
 
 
 class Graph:
@@ -15,16 +50,38 @@ class Graph:
         auxiliary_points are point with only one path option (connected to only 2 points);
         lines are the paths connecting every point
     """
-    def __init__(self, all_lines, intersections):
-        self.lines = []
+    def __init__(self, all_lines: list[Line], intersections: dict[tuple[int, int], Point2D]):
+        self._lines = all_lines
+        self._intersections = intersections
         self.auxiliary_nodes = []
         self.auxiliary_points = []
-        self.nodes = []
-        # Counter([v for k in intersections.keys() for v in k])
-        for line in all_lines:
+        self.destination_nodes = []
+
+        # Create intersection points
+        temp_nodes = [Node(p) for p in self._intersections.values()]
+
+        # Constructing graph
+        self.build_destination_nodes(temp_nodes)
+        self.assign_temporary_nodes(temp_nodes)
+        print()
+
+    def __repr__(self):
+        return f"Graph with {len(self.destination_nodes)} destination nodes"
+
+    @staticmethod
+    def find_node_by_coordinate(coord, nodes_list):
+        return next(n for n in nodes_list if n.coordinates.coordinates == coord.coordinates)
+
+    def build_destination_nodes(self, temporary_nodes):
+        def find_closest_point(ref_point, ref_line):
+            dists = {ref_point.distance(_p): _p for _idx, _p in self._intersections.items() if self._lines.index(ref_line) in _idx}
+            argmin = min(dists.keys())
+            return dists[argmin]
+
+        for line in self._lines:
             possible_points = list(line.copy().points)
-            for idx, inter_point in intersections.items():
-                if all_lines.index(line) not in idx:
+            for idx, inter_point in self._intersections.items():
+                if self._lines.index(line) not in idx:
                     continue
                 d = np.array([inter_point.distance(_p) for _p in possible_points]) < 30
                 node = np.where(d == True)[0]
@@ -35,7 +92,25 @@ class Graph:
                     break
             if len(possible_points) > 0:
                 for point in possible_points:
-                    self.nodes.append(point)
+                    _n = Node(point)
+                    closest = find_closest_point(point, line)
+                    c2p = _n.coordinate_to_point(closest)
+                    closest = self.find_node_by_coordinate(closest, temporary_nodes)
+                    setattr(_n, c2p, closest)
+                    setattr(closest, invert_coordinates(c2p), _n)
+                    self.destination_nodes.append(_n)
+
+    def assign_temporary_nodes(self, temporary_nodes):
+        for idx, point in self._intersections.items():
+            _node = self.find_node_by_coordinate(point, temporary_nodes)
+            for _idx, _point in self._intersections.items():
+                if idx == _idx or not any(i in _idx for i in idx):
+                    continue
+                direction = _node.coordinate_to_point(_point)
+                val = getattr(_node, direction, None)
+                if val is not None and _node.coordinates.distance(val.coordinates) < _node.coordinates.distance(_point):
+                    continue
+                setattr(_node, direction, self.find_node_by_coordinate(_point, temporary_nodes))
 
 
 def find_intersections(grouped_lines):
@@ -63,6 +138,40 @@ def find_intersections(grouped_lines):
     return intersections
 
 
+def invert_coordinates(coord: str):
+    if coord.lower() == 'east':
+        return 'west'
+    elif coord.lower() == 'west':
+        return 'east'
+    elif coord.lower() == 'north':
+        return 'south'
+    elif coord.lower() == 'south':
+        return 'north'
+    else:
+        raise ValueError(f"Invalid input {coord}")
+
+
+def plot_intersections(in_image, iterable):
+    # Plot image with intersections
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 2
+    font_color = (0, 255, 0)
+    thickness = 3
+    line_type = 2
+    for v in iterable:
+        vals = [int(round(x)) for x in v.coordinates.evalf().args]
+        text = v.__repr__()
+        res_img = cv2.circle(in_image, vals, radius=0, color=(0, 0, 255), thickness=35)
+        cv2.putText(final_img, text,
+                    vals,
+                    font,
+                    font_scale,
+                    font_color,
+                    thickness,
+                    line_type)
+    show_image(res_img)
+
+
 if __name__ == '__main__':
     """Reading Image"""
     img = cv2.imread('foto_mesa.jpeg')
@@ -78,9 +187,10 @@ if __name__ == '__main__':
         _x1, _y1, _x2, _y2 = gl[0]
         cv2.line(final_img, (_x1, _y1), (_x2, _y2), (255, 0, 0), 5)
 
-    show_image(final_img)
+    # show_image(final_img)
 
     inter = find_intersections(processed_lines)
+    # plot_intersections(final_img)
     g = Graph(processed_lines, inter)
     print(f"{len(inter)} intersections:")
     for p in inter.values():
@@ -88,20 +198,3 @@ if __name__ == '__main__':
             raise ValueError(f"Point {p.evalf()} not contained in any line in processed_lines")
         print(p.evalf())
 
-# Plot image with intersections
-# font = cv2.FONT_HERSHEY_SIMPLEX
-# fontScale = 2
-# fontColor = (0,255,0)
-# thickness = 3
-# lineType = 2
-# for idx, v in inter.items():
-#     vals = [int(round(x)) for x in v.evalf().args]
-#     final_img = cv2.circle(final_img, vals, radius=0, color=(0, 0, 255), thickness=35)
-#     cv2.putText(final_img, str(idx),
-#                 vals,
-#                 font,
-#                 fontScale,
-#                 fontColor,
-#                 thickness,
-#                 lineType)
-# show_image(final_img)
