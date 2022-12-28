@@ -128,6 +128,32 @@ class Graph:
             node.id = i
             i += 1
 
+    def build_adjacency_matrix(self):
+        def connect_aux_point(dest_point, connected_point, _direction, _destination):
+            for _d, _n in connected_point.connected_to.items():
+                if _n is None or _n == dest_point:
+                    continue
+                _direction += _d[0].upper()
+                _destination = _n.id
+                if _n in self.auxiliary_points:
+                    _direction, _destination = connect_aux_point(connected_point, _n, _direction, _destination)
+            return _direction, _destination
+
+        m_size = min(n.id for n in self.auxiliary_points)
+        matrix = np.full((m_size, m_size), np.nan, dtype=object)
+        for node in self.destination_nodes + self.auxiliary_nodes:
+            for d, n in node.connected_to.items():
+                if n is None:
+                    continue
+                direction = d[0].upper()
+                dest = n.id
+                # If node is connected to auxiliary point, add direction to other point and extra turn
+                if n in self.auxiliary_points:
+                    direction, dest = connect_aux_point(node, n, direction, dest)
+                matrix[node.id, dest] = direction
+
+        return matrix
+
 
 def find_intersections(grouped_lines):
     intersections = {}
@@ -170,16 +196,16 @@ def invert_coordinates(coord: str):
 def plot_intersections(in_image, iterable):
     # Plot image with intersections
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 2
-    font_color = (0, 255, 0)
-    thickness = 3
+    font_scale = 1.3
+    font_color = (50, 170, 50)
+    thickness = 5
     line_type = 2
     res_img = in_image.copy()
     for v in iterable:
         vals = [int(round(x)) for x in v.coordinates.evalf().args]
         text = v.__repr__()
         res_img = cv2.circle(res_img, vals, radius=0, color=(0, 0, 255), thickness=35)
-        cv2.putText(final_img, text,
+        cv2.putText(res_img, text,
                     vals,
                     font,
                     font_scale,
@@ -208,6 +234,7 @@ if __name__ == '__main__':
 
     inter = find_intersections(processed_lines)
     g = Graph(processed_lines, inter)
+    mat = g.build_adjacency_matrix()
     plot_intersections(final_img, g.destination_nodes)
     print(f"{len(inter)} intersections:")
     for p in inter.values():
