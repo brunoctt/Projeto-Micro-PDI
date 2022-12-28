@@ -62,8 +62,8 @@ class Graph:
 
         # Constructing graph
         self.build_destination_nodes(temp_nodes)
+        self.connect_temporary_nodes(temp_nodes)
         self.assign_temporary_nodes(temp_nodes)
-        print()
 
     def __repr__(self):
         return f"Graph with {len(self.destination_nodes)} destination nodes"
@@ -100,7 +100,7 @@ class Graph:
                     setattr(closest, invert_coordinates(c2p), _n)
                     self.destination_nodes.append(_n)
 
-    def assign_temporary_nodes(self, temporary_nodes):
+    def connect_temporary_nodes(self, temporary_nodes):
         for idx, point in self._intersections.items():
             _node = self.find_node_by_coordinate(point, temporary_nodes)
             for _idx, _point in self._intersections.items():
@@ -111,6 +111,21 @@ class Graph:
                 if val is not None and _node.coordinates.distance(val.coordinates) < _node.coordinates.distance(_point):
                     continue
                 setattr(_node, direction, self.find_node_by_coordinate(_point, temporary_nodes))
+
+    def assign_temporary_nodes(self, temp_nodes):
+        for node in temp_nodes:
+            if node.amount_of_connections == 1:
+                raise AttributeError(f"{node} has 1 connection and was not considered a destination node")
+            elif node.amount_of_connections == 2:
+                self.auxiliary_points.append(node)
+            else:
+                self.auxiliary_nodes.append(node)
+
+        # Reordering nodes so destination nodes have lower id's
+        i = 0
+        for node in self.destination_nodes + self.auxiliary_nodes + self.auxiliary_points:
+            node.id = i
+            i += 1
 
 
 def find_intersections(grouped_lines):
@@ -158,10 +173,11 @@ def plot_intersections(in_image, iterable):
     font_color = (0, 255, 0)
     thickness = 3
     line_type = 2
+    res_img = in_image.copy()
     for v in iterable:
         vals = [int(round(x)) for x in v.coordinates.evalf().args]
         text = v.__repr__()
-        res_img = cv2.circle(in_image, vals, radius=0, color=(0, 0, 255), thickness=35)
+        res_img = cv2.circle(res_img, vals, radius=0, color=(0, 0, 255), thickness=35)
         cv2.putText(final_img, text,
                     vals,
                     font,
@@ -190,11 +206,10 @@ if __name__ == '__main__':
     # show_image(final_img)
 
     inter = find_intersections(processed_lines)
-    # plot_intersections(final_img)
     g = Graph(processed_lines, inter)
+    plot_intersections(final_img, g.destination_nodes)
     print(f"{len(inter)} intersections:")
     for p in inter.values():
         if not any(Segment(*pl.points).contains(p) for pl in processed_lines):
             raise ValueError(f"Point {p.evalf()} not contained in any line in processed_lines")
-        print(p.evalf())
-
+        # print(p.evalf())
