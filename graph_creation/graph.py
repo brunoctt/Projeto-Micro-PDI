@@ -30,6 +30,7 @@ class Node:
     def amount_of_connections(self):
         return sum(v is not None for v in self.connected_to.values())
 
+    # noinspection PyTypeChecker
     def coordinate_to_point(self, other):
         segment = Segment(self.coordinates, other).direction.evalf()
         direction_val = max(segment.coordinates, key=abs)
@@ -58,7 +59,7 @@ class Graph:
         self.destination_nodes = []
 
         # Create intersection points
-        temp_nodes = [Node(p) for p in self._intersections.values()]
+        temp_nodes = [Node(_p) for _p in self._intersections.values()]
 
         # Constructing graph
         self.build_destination_nodes(temp_nodes)
