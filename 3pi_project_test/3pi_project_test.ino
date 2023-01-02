@@ -11,13 +11,14 @@
 int convert_coordinate(char direction);
 char convert_to_turn(int turn);
 char get_turn(char direction, int *robot_facing);
+char invert_coord(char c);
 void add_edge(int src, int dest, String fdir, String sdir);
 Vector<char> create_path_turns(int source, int destination, int *robot_facing);
 bool final_node(int node);
 
 Pololu3pi robot;
 unsigned int sensors[5]; // an array to hold sensor values
-const int n_vertices = 12;
+const int n_vertices = 13; // maximum number of nodes
 const int aux_vertices = 4;
 // 2d array of vectors is used to store the graph in the form of an adjacency list
 char adj[n_vertices][n_vertices][4];
@@ -35,33 +36,12 @@ void add_edge(int src, int dest, char fdir[], char sdir[])
   strcpy(adj[dest][src], sdir);
 }
 
-int validate_input(bool validating_location){
-  while (true){
-    if (Serial.available()){
-      String r = Serial.readString();
-      r.trim(); // remove leading trailing white space e.g. CR etc
-      int result = r.toInt();
-      if (r != (String(result))) {
-        Serial.print(r); Serial.println(" is not an integer");
-        if (validating_location)
-          Serial.println("Enter robot location: ");
-        else
-          Serial.println("Enter destination:");
-      } else if (robot_location == result && !validating_location){
-        Serial.print("Robot already at node "); Serial.println(result);
-        Serial.println("Enter destination:");
-      } else if (result < 0 || result  >= n_vertices - aux_vertices){
-        Serial.print("Invalid node number: ");
-        Serial.println(result);
-        if (validating_location)
-          Serial.println("Enter robot location: ");
-        else
-          Serial.println("Enter destination:");
-      } else{
-        Serial.println(result);
-        return result;
-      }
-  }}}  
+void invert_dir(char *dir, int dir_size){
+  char aux[dir_size];
+  strcpy(aux, dir);
+  for (int i = 1; i < dir_size; i++)
+    dir[i-1] = invert_coord(aux[dir_size - 1 - i]);
+  }
 
 void setup(){
   unsigned int counter; 
@@ -99,19 +79,64 @@ void setup(){
     Serial.println("=============================");
     }
 
-  // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
-  // Auxiliary nodes are noted as negative, so they are the last n from n_vertices
-  add_edge(0, 11, "NE", "WS");
-  add_edge(11, 10,"N", "S");
-  add_edge(11, 1, "SE", "WN");
-  add_edge(11, 2, "E", "W");
-  add_edge(10, 9, "NWN", "SES");
-  add_edge(10, 3, "E", "W");
-  add_edge(10, 7, "W", "E");
-  add_edge(9, 6, "N", "S");
-  add_edge(9, 8, "E", "W");
-  add_edge(8, 4, "E", "W");
-  add_edge(8, 5, "N", "S");
+    // Nodes amount
+    int dest_vert = 9;
+    Serial.println("Enter number of destination nodes:");
+    while (!Serial.available()){}
+    dest_vert = Serial.parseInt();
+    Serial.println("Enter number of auxiliary nodes:");
+    while (!Serial.available()){}
+    const int aux_vertices = Serial.parseInt();
+
+    const int n_vertices = dest_vert + aux_vertices;
+    Serial.print("Total of ");
+    Serial.print(n_vertices);
+    Serial.println(" nodes registered");
+
+
+    // Registering nodes relations
+    bool reg = true;
+    Serial.println("Register adjacency matrix:");
+    while(reg){
+      Serial.println("Enter node relation (node1 node2 direction12):");
+      while (!Serial.available()){}
+      String input = Serial.readString();
+      Serial.println(input);
+      int space = input.indexOf(' ');
+      int node1 = input.substring(0, space).toInt(); // possibly use trim()
+      input = input.substring(space+1);
+      space = input.indexOf(' ');
+      int node2 = input.substring(0, space).toInt();
+      input = input.substring(space+1);
+      space = input.length()+1;
+      char dir1[space]; 
+      input.toCharArray(dir1, space);
+      char dir2[space];
+      strcpy(dir2, dir1);
+      invert_dir(dir2, space);
+      
+      add_edge(node1, node2, dir1, dir2);
+
+      Serial.println("Add another node relation? (y/n)");
+      while (!Serial.available()){}
+      char ans = Serial.read();
+      if (ans == 'n')
+        reg = false;      
+      }
+
+//  // Adding coordinates of nodes to adjacency matrix, mapping directions from source to destination
+//  // Auxiliary nodes are noted as negative, so they are the last n from n_vertices
+//  add_edge(0, 11, "NE", "WS");
+//  add_edge(11, 10,"N", "S");
+//  add_edge(11, 1, "SE", "WN");
+//  add_edge(11, 2, "E", "W");
+//  add_edge(10, 9, "NWN", "SES");
+//  add_edge(10, 3, "E", "W");
+//  add_edge(10, 7, "W", "E");
+//  add_edge(9, 6, "N", "S");
+//  add_edge(9, 8, "E", "W");
+//  add_edge(8, 4, "E", "W");
+//  add_edge(8, 5, "N", "S");
   
   Serial.println("Connections list:");
   for (int i =0; i<n_vertices; i++){
@@ -125,7 +150,7 @@ void setup(){
 
   Serial.println("Enter robot location: ");
   while (!Serial.available()){}
-  robot_location = validate_input(true);
+  robot_location = validate_input(true, n_vertices, aux_vertices);
   for (int i =0; i<n_vertices; i++){
     if (adj[robot_location][i][0] != '\0'){
       robot_facing = convert_coordinate(adj[robot_location][i][0]);
@@ -139,7 +164,7 @@ void loop(){
   Serial.println("Enter destination:");
 
   while (!Serial.available()){}
-  int target = validate_input(false);;
+  int target = validate_input(false, n_vertices, aux_vertices);;
   Serial.println("Moving to target:");
   Serial.println(target);
 

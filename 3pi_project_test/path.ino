@@ -1,6 +1,4 @@
 #include <Vector.h>
-// extern const unsigned int n_vertices;
-// extern char adj[n_vertices][n_vertices][3];
 
 /**
     BFS algorithm that stores predecessor of each vertex in array p 
@@ -195,3 +193,17 @@ char convert_value(int direction){
             return 'N';
     }
 }
+
+char invert_coord(char c){
+   switch (c){
+    case 'N':
+      return 'S';
+    case 'S':
+      return 'N';
+    case 'E':
+      return 'W';
+    case 'W':
+      return 'E';
+    }
+    return 'N';
+  }
