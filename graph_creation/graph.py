@@ -193,7 +193,7 @@ def invert_coordinates(coord: str):
         raise ValueError(f"Invalid input {coord}")
 
 
-def plot_intersections(in_image, iterable):
+def plot_intersections(in_image, iterable, save=False):
     # Plot image with intersections
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 1.3
@@ -212,6 +212,8 @@ def plot_intersections(in_image, iterable):
                     font_color,
                     thickness,
                     line_type)
+    if save:
+        cv2.imwrite("nodes.png", res_img)
     show_image(res_img)
 
 
