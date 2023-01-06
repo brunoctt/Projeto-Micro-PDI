@@ -1,10 +1,8 @@
 import math
 import numpy as np
-from sympy import Line, Segment
 
-
-X_AXIS = Line((0, 0), (10, 0))
-Y_AXIS = Line((0, 0), (0, 10))
+global MIN_DISTANCE
+global MIN_ANGLE
 
 
 def get_orientation(line):
@@ -47,87 +45,89 @@ def distance_point_to_line(point, line):
 
 
 def get_distance(line1, line2):
-    dist1 = distance_point_to_line(line1[:2], line2)
-    dist2 = distance_point_to_line(line1[2:], line2)
-    dist3 = distance_point_to_line(line2[:2], line1)
-    dist4 = distance_point_to_line(line2[2:], line1)
 
-    return min(dist1, dist2, dist3, dist4)
+    return min(
+        distance_point_to_line(line1[:2], line2),
+        distance_point_to_line(line1[2:], line2),
+        distance_point_to_line(line2[:2], line1),
+        distance_point_to_line(line2[2:], line1)
+    )
 
 
-class HoughBundler:
-    def __init__(self, min_distance=5, min_angle=2):
-        self.min_distance = min_distance
-        self.min_angle = min_angle
+def check_is_line_different(line_1, groups):
+    for group in groups:
+        for line_2 in group:
+            if get_distance(line_2, line_1) < MIN_DISTANCE:
+                orientation_1 = get_orientation(line_1)
+                orientation_2 = get_orientation(line_2)
+                if abs(orientation_1 - orientation_2) < MIN_ANGLE:
+                    group.append(line_1)
+                    return False
+    return True
 
-    def check_is_line_different(self, line_1, groups):
-        for group in groups:
-            for line_2 in group:
-                if get_distance(line_2, line_1) < self.min_distance:
-                    orientation_1 = get_orientation(line_1)
-                    orientation_2 = get_orientation(line_2)
-                    if abs(orientation_1 - orientation_2) < self.min_angle:
-                        group.append(line_1)
-                        return False
-        return True
 
-    def merge_lines_into_groups(self, lines_list):
-        groups = list()
-        # first line will create new group every time
-        groups.append([lines_list[0]])
-        # if line is different from existing groups, create a new group
-        for line_new in lines_list[1:]:
-            if self.check_is_line_different(line_new, groups):
-                groups.append([line_new])
+def merge_lines_into_groups(lines_list):
+    groups = list()
+    # first line will create new group every time
+    groups.append([lines_list[0]])
+    # if line is different from existing groups, create a new group
+    for line_new in lines_list[1:]:
+        if check_is_line_different(line_new, groups):
+            groups.append([line_new])
 
-        return groups
+    return groups
 
-    @staticmethod
-    def merge_line_segments(lines):
-        orientation = get_orientation(lines[0])
 
-        if len(lines) == 1:
-            return np.block([[lines[0][:2], lines[0][2:]]])
+def merge_line_segments(lines):
+    orientation = get_orientation(lines[0])
 
-        points = []
-        for line in lines:
-            points.append(line[:2])
-            points.append(line[2:])
+    if len(lines) == 1:
+        return np.block([[lines[0][:2], lines[0][2:]]])
+
+    points = []
+    for line in lines:
+        points.append(line[:2])
+        points.append(line[2:])
+    if 45 < orientation <= 90:
+        # sort by y
+        points = sorted(points, key=lambda point: point[1])
+    else:
+        # sort by x
+        points = sorted(points, key=lambda point: point[0])
+
+    return np.block([[points[0], points[-1]]])
+
+
+def process_lines(all_lines, min_dist=5, min_ang=2):
+    lines_horizontal = []
+    lines_vertical = []
+    global MIN_DISTANCE
+    global MIN_ANGLE
+    MIN_DISTANCE = min_dist
+    MIN_ANGLE = min_ang
+
+    for line in all_lines:
+        line = line[0]
+        line[::2].sort()
+        line[1::2].sort()
+        orientation = get_orientation(line)
+        # Considering as vertical after passes 45 degrees
         if 45 < orientation <= 90:
-            # sort by y
-            points = sorted(points, key=lambda point: point[1])
+            lines_vertical.append(line)
         else:
-            # sort by x
-            points = sorted(points, key=lambda point: point[0])
+            lines_horizontal.append(line)
 
-        return np.block([[points[0], points[-1]]])
+    lines_vertical = sorted(lines_vertical, key=lambda l: l[1])
+    lines_horizontal = sorted(lines_horizontal, key=lambda l: l[0])
+    merged_lines_all = []
 
-    def process_lines(self, all_lines):
-        lines_horizontal = []
-        lines_vertical = []
+    # for each cluster in vertical and horizontal lines leave only one line
+    for g in [lines_horizontal, lines_vertical]:
+        if len(g) > 0:
+            groups = merge_lines_into_groups(g)
+            merged_lines = []
+            for group in groups:
+                merged_lines.append(merge_line_segments(group))
+            merged_lines_all.extend(merged_lines)
 
-        for line in all_lines:
-            line = line[0]
-            line[::2].sort()
-            line[1::2].sort()
-            orientation = get_orientation(line)
-            # Considering as vertical after passes 45 degrees
-            if 45 < orientation <= 90:
-                lines_vertical.append(line)
-            else:
-                lines_horizontal.append(line)
-
-        lines_vertical = sorted(lines_vertical, key=lambda l: l[1])
-        lines_horizontal = sorted(lines_horizontal, key=lambda l: l[0])
-        merged_lines_all = []
-
-        # for each cluster in vertical and horizontal lines leave only one line
-        for g in [lines_horizontal, lines_vertical]:
-            if len(g) > 0:
-                groups = self.merge_lines_into_groups(g)
-                merged_lines = []
-                for group in groups:
-                    merged_lines.append(self.merge_line_segments(group))
-                merged_lines_all.extend(merged_lines)
-
-        return merged_lines_all
+    return merged_lines_all

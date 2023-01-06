@@ -1,8 +1,8 @@
-import numpy as np
+from graph_creation.group_lines import process_lines
 from graph_creation.lines_detection import get_hough_lines_from_image, binary_thresh, show_image
-from graph_creation.group_lines import HoughBundler
 from sympy import Line, Segment, Point2D
 from math import degrees
+import numpy as np
 import cv2
 
 
@@ -222,8 +222,7 @@ if __name__ == '__main__':
     img = cv2.imread('foto_mesa.jpeg')
     binary = binary_thresh(img)
     hough_lines = get_hough_lines_from_image(img)
-    bundler = HoughBundler(min_distance=10, min_angle=10)
-    processed_lines = bundler.process_lines(hough_lines)
+    processed_lines = process_lines(hough_lines)
     print(f"{len(processed_lines)} lines")
     # kernel = np.ones((5, 5), np.uint8)
     final_img = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)

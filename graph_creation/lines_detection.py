@@ -22,8 +22,6 @@ def get_contours(binary_image):
     contours = contours[idx]  # [x, y]
     mask = np.zeros((1600, 901, 3), dtype=np.uint8)
     image_contours = cv2.drawContours(mask, contours, -1, (255, 255, 255), 30)
-    # dilate = cv2.dilate(mask, kernel, iterations=8)
-    # image_contours = cv2.erode(dilate, kernel, iterations=10)
     return image_contours
 
 
