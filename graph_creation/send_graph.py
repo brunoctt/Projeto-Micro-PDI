@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # plot_intersections(final_img, g.destination_nodes+g.auxiliary_nodes, save=True)
 
     ser = Serial('COM3', 9600)
-    ser.timeout = 60
+    ser.timeout = 120
     if not ser.is_open:
         ser.open()
 
@@ -28,9 +28,9 @@ if __name__ == '__main__':
         r = ser.readline()
         print(r)
 
-    print("Connected")
+    print("Connected, press B button on robot.")
     res = ser.readline()
-    ser.timeout = 7
+    ser.timeout = 5
     while True:
         if len(res) < 1:
             break
@@ -56,7 +56,6 @@ if __name__ == '__main__':
                 read_serial()
             else:
                 first = False
-            # sleep(1)
             ser.write(str.encode(f'{i} {j} {mat[i][j]}'))
             print(f'{i} {j} {mat[i][j]}')
             read_serial()
@@ -67,15 +66,13 @@ if __name__ == '__main__':
 
     while True:
         res = ser.readline()
-        if len(res) > 1:
-            print(ser.readline())
-        else:
+        print(res)
+        if b"location" in res:
             break
 
-    ser.write(str.encode(f'0'))
-    print('0')
-
-    # ser.timeout = 20
+    location = input()
+    ser.write(str.encode(location))
+    print(location)
 
     while True:
 
