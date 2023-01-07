@@ -98,7 +98,7 @@ def merge_line_segments(lines):
     return np.block([[points[0], points[-1]]])
 
 
-def process_lines(all_lines, min_dist=5, min_ang=2):
+def process_lines(all_lines, min_dist=10, min_ang=10):
     lines_horizontal = []
     lines_vertical = []
     global MIN_DISTANCE
